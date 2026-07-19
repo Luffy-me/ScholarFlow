@@ -1,7 +1,8 @@
-"""Pipeline orchestrator with writing-quality intelligence.
+"""Pipeline orchestrator with insight + writing-quality intelligence.
 
-Research → Angle Finder → Strategist → Writer → Claim Checker →
-AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor
+Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
+Writer → Claim Checker → AI Writing Quality Analyzer → Humanizer →
+Critic → Engagement Predictor
 """
 
 from __future__ import annotations
@@ -14,9 +15,11 @@ from agents.critic import CriticAgent, CriticInput
 from agents.engagement_predictor import EngagementPredictorAgent, EngagementPredictorInput
 from agents.grounding import ClaimCheckerAgent, GroundingInput, check_claims
 from agents.humanizer import HumanizerAgent, HumanizerInput
-from agents.memory_builder import normalize_memory, approved_experience_texts
+from agents.insight_engine import InsightEngineAgent, InsightEngineInput
+from agents.memory_builder import approved_experience_texts, normalize_memory
 from agents.researcher import ResearcherAgent, ResearcherInput
 from agents.strategist import StrategistAgent, StrategistInput
+from agents.trend_analyzer import TrendAnalyzerAgent, TrendAnalyzerInput
 from agents.writer import WriterAgent, WriterInput
 from agents.writing_quality import WritingQualityAnalyzer, WritingQualityInput
 from apps.api.providers import build_base_provider, provider_for_stage
@@ -44,6 +47,8 @@ async def run_generation_pipeline(
         return provider_for_stage(stage, fake=fake)
 
     researcher = ResearcherAgent(stage_provider("researcher"))
+    trend_analyzer = TrendAnalyzerAgent(stage_provider("trend_analyzer"))
+    insight_engine = InsightEngineAgent(stage_provider("insight_engine"))
     angle_finder = AngleFinderAgent(stage_provider("angle_finder"))
     strategist = StrategistAgent(stage_provider("strategist"))
     writer = WriterAgent(stage_provider("writer"))
@@ -62,12 +67,44 @@ async def run_generation_pipeline(
         )
     )
 
+    trends = await trend_analyzer.run(
+        TrendAnalyzerInput(
+            topic=topic,
+            content_mode=content_mode,
+            user_memory=memory,
+            extra={
+                "audience": audience,
+                "research": research.data,
+            },
+        )
+    )
+
+    insight_out = await insight_engine.run(
+        InsightEngineInput(
+            topic=topic,
+            content_mode=content_mode,
+            user_memory=memory,
+            extra={
+                "audience": audience,
+                "research": research.data,
+                "trends": trends.data,
+                "verified_experiences": approved_experience_texts(memory),
+            },
+        )
+    )
+    insight = insight_out.insight.as_dict()
+
     angles_out = await angle_finder.run(
         AngleFinderInput(
             topic=topic,
             content_mode=content_mode,
             user_memory=memory,
-            extra={"audience": audience} if audience else {},
+            extra={
+                "audience": audience,
+                "insight": insight,
+                "trends": trends.data,
+                "research": research.data,
+            },
         )
     )
     angles = [a.model_dump() for a in angles_out.angles]
@@ -85,6 +122,8 @@ async def run_generation_pipeline(
                 "audience": audience,
                 "angle": selected_angle,
                 "research": research.data,
+                "insight": insight,
+                "trends": trends.data,
             },
         )
     )
@@ -99,6 +138,7 @@ async def run_generation_pipeline(
                 "audience": audience,
                 "angle": selected_angle,
                 "strategy": strategy.data,
+                "insight": insight,
             },
         )
     )
@@ -171,6 +211,8 @@ async def run_generation_pipeline(
         "format": format,
         "audience": audience,
         "research": research.data,
+        "trends": trends.data,
+        "insight": insight_out.as_report(),
         "angles": angles,
         "selected_angle": selected_angle,
         "strategy": strategy.data,
@@ -194,6 +236,8 @@ async def run_generation_pipeline(
         "engagement_prediction": predicted.scores.model_dump(),
         "stages": {
             "researcher": research.model_dump(),
+            "trend_analyzer": trends.model_dump(),
+            "insight_engine": insight_out.model_dump(),
             "angle_finder": angles_out.model_dump(),
             "strategist": strategy.model_dump(),
             "writer": written.model_dump(),

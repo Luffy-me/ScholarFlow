@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from models.base import ChatMessage, GenerateResult, ModelProvider, ProviderHealth
@@ -40,6 +41,58 @@ class FakeProvider(ModelProvider):
                     "open_questions": ["What constraint limits your workflow?"],
                 }
             )
+        elif "JSON" in blob.upper() and (
+            "trend analyst" in blob.lower()
+            or "trend_level" in blob.lower()
+            or "Produce trend analysis" in blob
+        ):
+            text = json.dumps(
+                {
+                    "topic": "local AI",
+                    "trend_level": "rising",
+                    "why_it_matters": "Generic AI takes are saturated; operating lessons still stand out.",
+                    "possible_angles": ["evaluation-loop lesson", "local vs cloud tradeoff"],
+                    "target_audience": "builders",
+                    "saturation_risk": "medium",
+                    "opportunity": "Share a concrete experiment constraint.",
+                }
+            )
+        elif "JSON" in blob.upper() and (
+            "insight engine" in blob.lower()
+            or "Generate the insight JSON" in blob
+        ):
+            broad_topic = bool(
+                re.search(
+                    r"Topic:\s*(AI|Artificial Intelligence|The future of AI|AI trends)\s*$",
+                    blob,
+                    re.I | re.M,
+                )
+            )
+            empty_memory = "Verified experiences" in blob and re.search(
+                r"Verified experiences[^\n]*:\s*\[\s*\]", blob
+            )
+            if broad_topic and empty_memory:
+                text = json.dumps(
+                    {
+                        "core_insight": "AI is changing everything across industries.",
+                        "why_it_matters": "The future of work depends on embracing digital transformation.",
+                        "common_belief": "AI will transform every industry.",
+                        "new_perspective": "AI is transforming every industry, so teams should stay ahead of the curve.",
+                        "supporting_evidence": "",
+                        "reader_takeaway": "Believe in yourself and unlock your potential with AI.",
+                    }
+                )
+            else:
+                text = json.dumps(
+                    {
+                        "core_insight": "The bottleneck in local LLM work is usually the evaluation loop, not model size.",
+                        "why_it_matters": "Teams waste cycles upgrading models before measuring draft failure modes.",
+                        "common_belief": "Bigger or newer models automatically produce better content.",
+                        "new_perspective": "Constrained evaluation criteria and failing tests create more lift than model swaps.",
+                        "supporting_evidence": "Compared local LLM workflows with cloud APIs for content drafting",
+                        "reader_takeaway": "Write one failing test for generic phrasing, then compare two models against it.",
+                    }
+                )
         elif "JSON" in blob.upper() and ("discussion_question" in blob.lower() or "content strategist" in blob.lower() or "Produce strategy" in blob):
             text = json.dumps(
                 {

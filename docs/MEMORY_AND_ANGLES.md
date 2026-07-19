@@ -49,6 +49,10 @@ Output:
 ```text
 Research
   ↓
+Trend Analysis
+  ↓
+Insight Engine
+  ↓
 Angle Finder
   ↓
 Strategist

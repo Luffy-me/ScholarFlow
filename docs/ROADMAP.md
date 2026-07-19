@@ -209,6 +209,30 @@ See [WRITING_QUALITY.md](./WRITING_QUALITY.md).
 
 ---
 
+## Phase 1.9 — Insight Engine
+
+**Status:** implemented
+
+### Scope
+
+1. `agents/insight_engine/` (`insight_generator.py`, `schemas.py`, `prompts.py`)
+2. Trend Analysis wired before Insight Engine (`agents/trend_analyzer/`)
+3. Insight shape: core_insight, why_it_matters, common_belief, new_perspective, supporting_evidence, reader_takeaway
+4. Prefer counterintuitive / experiment lessons; avoid generic/motivational/obvious takes
+5. Tests in `tests/test_insight_engine.py`
+
+Pipeline:
+
+```text
+Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
+Writer → Claim Checker → AI Writing Quality Analyzer → Humanizer →
+Critic → Engagement Predictor
+```
+
+See [INSIGHT_ENGINE.md](./INSIGHT_ENGINE.md).
+
+---
+
 ## Phase 2 — Simple Web Interface
 
 ### Scope

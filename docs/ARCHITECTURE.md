@@ -9,8 +9,9 @@ This is a **content intelligence system**, not a single-prompt text generator.
 Full product pipeline:
 
 ```text
-Research → Angle Finder → Strategist → Writer → Claim Checker →
-AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor → Export
+Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
+Writer → Claim Checker → AI Writing Quality Analyzer → Humanizer →
+Critic → Engagement Predictor → Export
 ```
 
 ```
@@ -23,6 +24,7 @@ linkedin-content-engine/
 │   ├── researcher/
 │   ├── strategist/
 │   ├── angle_finder/
+│   ├── insight_engine/      # original insights before writing
 │   ├── writer/
 │   ├── grounding/           # Truth Layer claim checker
 │   ├── writing_quality/     # AI Writing Quality Framework
@@ -488,6 +490,12 @@ Topic + format + content_mode + user_memory.json (+ optional evidence)
         │
         ▼
   Research Agent
+        │
+        ▼
+  Trend Analysis Agent
+        │
+        ▼
+  Insight Engine                ──► core insight + belief contrast + takeaway
         │
         ▼
   Angle Finder Agent

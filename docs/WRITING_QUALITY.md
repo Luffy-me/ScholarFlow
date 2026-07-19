@@ -13,6 +13,10 @@ It evaluates: “Does this content contain patterns commonly associated with low
 ```text
 Research
   ↓
+Trend Analysis
+  ↓
+Insight Engine
+  ↓
 Angle Finder
   ↓
 Strategist

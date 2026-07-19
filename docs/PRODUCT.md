@@ -9,22 +9,22 @@ This is **not** a generic AI text generator.
 The product behaves like a **content intelligence system**:
 
 ```text
-Research → Angle Finder → Strategize → Write → Claim Check →
-Writing Quality Analyze → Humanize → Critique → Predict → Export
+Research → Trend Analysis → Insight Engine → Angle Finder → Strategize →
+Write → Claim Check → Writing Quality Analyze → Humanize → Critique → Predict → Export
 ```
 
 Concrete behaviors:
 
 1. Discover what topics are gaining attention.
 2. Research information from trusted sources.
-3. Analyze angles and decide strategy.
-4. Generate human-like first-person LinkedIn posts.
-5. Ground claims against verified experience memory (Truth Layer).
-6. Score low-quality AI writing pattern risk (not AI detection / authorship claims).
-7. Humanize drafts into authentic voice without inventing facts.
-8. Critique truth, authenticity, pattern risk, and engagement potential.
-9. Predict engagement quality (weakness detection, not virality).
-10. Learn from the user’s real background and writing style over time.
+3. Generate an original insight (belief contrast + actionable takeaway) before writing.
+4. Analyze angles and decide strategy.
+5. Generate human-like first-person LinkedIn posts.
+6. Ground claims against verified experience memory (Truth Layer).
+7. Score low-quality AI writing pattern risk (not AI detection / authorship claims).
+8. Humanize drafts into authentic voice without inventing facts.
+9. Critique truth, authenticity, pattern risk, and engagement potential.
+10. Predict engagement quality (weakness detection, not virality).
 
 The goal is to help users turn **real knowledge, experiences, and research** into high-quality LinkedIn content.
 

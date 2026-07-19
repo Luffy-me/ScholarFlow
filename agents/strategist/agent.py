@@ -25,17 +25,19 @@ class StrategistAgent(Agent[StrategistInput, StrategistOutput]):
         audience = str(extra.get("audience") or "").strip()
         angle = extra.get("angle") or {}
         research = extra.get("research") or {}
+        insight = extra.get("insight") or {}
 
         system = (
             "You are a LinkedIn content strategist.\n"
             "Return JSON with audience, hook, opinion, structure, discussion_question.\n"
-            "Use the provided angle when available.\n"
+            "Use the provided insight and angle when available.\n"
             "Do not invent personal experiences, metrics, clients, or quotes."
         )
         user = (
             f"Topic: {payload.topic}\n"
             f"Audience: {audience}\n"
             f"Content mode: {payload.content_mode}\n"
+            f"Insight: {json.dumps(insight)}\n"
             f"Selected angle: {json.dumps(angle)}\n"
             f"Research: {json.dumps(research)}\n"
             "Produce strategy now."

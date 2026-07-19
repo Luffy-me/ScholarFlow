@@ -84,6 +84,8 @@ class Settings(BaseSettings):
             "writing_quality": self.writing_quality_model
             or self.critic_model
             or self.ollama_model,
+            "trend_analyzer": self.researcher_model or self.critic_model or self.ollama_model,
+            "insight_engine": self.writer_model or self.ollama_model,
         }
         return mapping.get(stage, self.ollama_model)
 
