@@ -57,6 +57,8 @@ Writer
   ↓
 Claim Checker
   ↓
+AI Writing Quality Analyzer
+  ↓
 Humanizer
   ↓
 Critic
@@ -71,4 +73,4 @@ Engagement Predictor
 - multiple angles generated
 - memory builder never auto-approves
 
-Suite: `pytest -q` (24 passed)
+See also [WRITING_QUALITY.md](./WRITING_QUALITY.md).

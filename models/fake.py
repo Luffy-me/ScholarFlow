@@ -88,6 +88,18 @@ class FakeProvider(ModelProvider):
                     "improvements": ["Add one concrete example"],
                 }
             )
+        elif "JSON" in blob.upper() and (
+            "writing-quality analyst" in blob.lower()
+            or "low-quality ai writing" in blob.lower()
+        ):
+            text = json.dumps(
+                {
+                    "improvements": [
+                        "Replace generic openings with a specific observation",
+                        "Keep claims grounded in verified memory",
+                    ]
+                }
+            )
         elif "JSON" in blob.upper() and "originality" in blob:
             text = json.dumps(
                 {
@@ -96,6 +108,10 @@ class FakeProvider(ModelProvider):
                     "engagement_probability": 68,
                     "evidence_quality": 60,
                     "ai_pattern_score": 25,
+                    "truth_score": 70,
+                    "human_quality_score": 75,
+                    "ai_pattern_risk": 25,
+                    "engagement_score": 68,
                     "issues": [],
                 }
             )

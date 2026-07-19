@@ -47,6 +47,10 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("RESEARCHER_MODEL", "researcher_model"),
     )
+    writing_quality_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("WRITING_QUALITY_MODEL", "writing_quality_model"),
+    )
     ollama_think: bool = Field(
         default=False,
         validation_alias=AliasChoices("OLLAMA_THINK", "ollama_think"),
@@ -77,6 +81,9 @@ class Settings(BaseSettings):
             "angle_finder": self.angle_model or self.writer_model or self.ollama_model,
             "strategist": self.strategist_model or self.writer_model or self.ollama_model,
             "researcher": self.researcher_model or self.critic_model or self.ollama_model,
+            "writing_quality": self.writing_quality_model
+            or self.critic_model
+            or self.ollama_model,
         }
         return mapping.get(stage, self.ollama_model)
 

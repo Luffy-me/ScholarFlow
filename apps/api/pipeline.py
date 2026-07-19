@@ -1,6 +1,7 @@
-"""Pipeline orchestrator with verified memory + angle intelligence.
+"""Pipeline orchestrator with writing-quality intelligence.
 
-Research → Angle Finder → Strategist → Writer → Claim Checker → Humanizer → Critic → Engagement Predictor
+Research → Angle Finder → Strategist → Writer → Claim Checker →
+AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor
 """
 
 from __future__ import annotations
@@ -13,10 +14,11 @@ from agents.critic import CriticAgent, CriticInput
 from agents.engagement_predictor import EngagementPredictorAgent, EngagementPredictorInput
 from agents.grounding import ClaimCheckerAgent, GroundingInput, check_claims
 from agents.humanizer import HumanizerAgent, HumanizerInput
-from agents.memory_builder import normalize_memory
+from agents.memory_builder import normalize_memory, approved_experience_texts
 from agents.researcher import ResearcherAgent, ResearcherInput
 from agents.strategist import StrategistAgent, StrategistInput
 from agents.writer import WriterAgent, WriterInput
+from agents.writing_quality import WritingQualityAnalyzer, WritingQualityInput
 from apps.api.providers import build_base_provider, provider_for_stage
 from models.base import ModelProvider
 from shared.knowledge import load_user_memory
@@ -46,6 +48,7 @@ async def run_generation_pipeline(
     strategist = StrategistAgent(stage_provider("strategist"))
     writer = WriterAgent(stage_provider("writer"))
     claim_checker = ClaimCheckerAgent(build_base_provider(fake=True))
+    quality_analyzer = WritingQualityAnalyzer(stage_provider("writing_quality"))
     humanizer = HumanizerAgent(stage_provider("humanizer"))
     critic = CriticAgent(stage_provider("critic"))
     predictor = EngagementPredictorAgent(stage_provider("predictor"))
@@ -104,8 +107,23 @@ async def run_generation_pipeline(
         GroundingInput(text=written.text, user_memory=memory, topic=topic)
     )
 
+    quality = await quality_analyzer.run(
+        WritingQualityInput(
+            content=grounded.text or written.text,
+            text=grounded.text or written.text,
+            content_mode=content_mode,
+            user_memory=memory,
+            verified_memory=approved_experience_texts(memory),
+        )
+    )
+
     humanized = await humanizer.run(
-        HumanizerInput(text=grounded.text or written.text, user_memory=memory, topic=topic)
+        HumanizerInput(
+            text=grounded.text or written.text,
+            user_memory=memory,
+            topic=topic,
+            extra={"improvements": quality.improvements, "writing_quality": quality.as_report()},
+        )
     )
 
     final_grounding = await claim_checker.run(
@@ -122,7 +140,24 @@ async def run_generation_pipeline(
     safe = final_check.safe
     approval_allowed = safe
 
-    critiqued = await critic.run(CriticInput(text=final_text, user_memory=memory))
+    final_quality = await quality_analyzer.run(
+        WritingQualityInput(
+            content=final_text,
+            text=final_text,
+            content_mode=content_mode,
+            user_memory=memory,
+            verified_memory=approved_experience_texts(memory),
+        )
+    )
+
+    critiqued = await critic.run(
+        CriticInput(
+            text=final_text,
+            user_memory=memory,
+            content_mode=content_mode,
+            extra={"writing_quality": final_quality.as_report()},
+        )
+    )
     predicted = await predictor.run(
         EngagementPredictorInput(text=final_text, user_memory=memory)
     )
@@ -151,6 +186,7 @@ async def run_generation_pipeline(
             + list(grounded.rejected_claims),
             "warnings": list(dict.fromkeys(final_check.warnings + grounded.warnings)),
         },
+        "writing_quality": final_quality.as_report(),
         "critic": {
             "scores": critiqued.scores.model_dump(),
             "issues": critiqued.issues,
@@ -162,8 +198,10 @@ async def run_generation_pipeline(
             "strategist": strategy.model_dump(),
             "writer": written.model_dump(),
             "claim_checker": grounded.model_dump(),
+            "writing_quality": quality.model_dump(),
             "humanizer": humanized.model_dump(),
             "final_claim_checker": final_grounding.model_dump(),
+            "final_writing_quality": final_quality.model_dump(),
             "critic": critiqued.model_dump(),
             "engagement_predictor": predicted.model_dump(),
         },

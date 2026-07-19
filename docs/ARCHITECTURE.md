@@ -9,7 +9,8 @@ This is a **content intelligence system**, not a single-prompt text generator.
 Full product pipeline:
 
 ```text
-Trend Research → Research → Strategize → Write → Humanize → Critique → Engagement Predict → Final Content → Export
+Research → Angle Finder → Strategist → Writer → Claim Checker →
+AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor → Export
 ```
 
 ```
@@ -21,11 +22,15 @@ linkedin-content-engine/
 │   ├── trend_analyzer/
 │   ├── researcher/
 │   ├── strategist/
+│   ├── angle_finder/
 │   ├── writer/
+│   ├── grounding/           # Truth Layer claim checker
+│   ├── writing_quality/     # AI Writing Quality Framework
 │   ├── humanizer/
 │   ├── critic/
 │   ├── engagement_predictor/
 │   │    └── score_agent.py
+│   ├── memory_builder/
 │   └── designer/
 ├── models/
 │   ├── ollama/
@@ -34,12 +39,15 @@ linkedin-content-engine/
 ├── knowledge/
 │   ├── writing_rules.json
 │   ├── banned_patterns.json
+│   ├── ai_writing_guidelines.json
 │   ├── user_style_profile.json
 │   ├── user_memory.json          # canonical personal context
 │   ├── content_modes.json        # founder / researcher / engineer / career_journey
 │   └── examples/
 │       ├── good_posts.json
-│       └── bad_posts.json
+│       ├── bad_posts.json
+│       ├── ai_like_posts.json
+│       └── human_like_posts.json
 ├── research_sources/             # source evidence layer (files)
 ├── feedback/
 │   └── engagement_feedback.json  # real performance learning loop
@@ -211,28 +219,70 @@ Final Content (+ optional Improve / Export)
 
 **Modes:** `founder`, `researcher`, `engineer`, `career_journey`
 
-### 5. Human Voice Agent (`agents/humanizer`)
+### 5. AI Writing Quality Analyzer (`agents/writing_quality`)
 
-**Checks**
+**Purpose:** Detect patterns commonly associated with low-quality AI writing and suggest authenticity improvements.
 
-- Sounds like a person?
-- Unnecessary corporate language?
-- Clear perspective?
-- Story present?
-- Too generic?
+**This is not an AI detector.** The system must never claim “this was written by AI.”
 
-**Improves:** sentence variation, personal tone, clarity, authenticity
+**Knowledge:** `knowledge/ai_writing_guidelines.json`, `knowledge/examples/ai_like_posts.json`, `knowledge/examples/human_like_posts.json`
 
-### 6. AI Writing Critic Agent (`agents/critic`)
+**Input**
 
-**Purpose:** Quality control against rules + evaluation dataset.
+```json
+{
+  "content": "",
+  "content_mode": "",
+  "verified_memory": []
+}
+```
 
-**References:** `knowledge/examples/good_posts.json`, `knowledge/examples/bad_posts.json`
+**Output**
+
+```json
+{
+  "human_quality_score": 0,
+  "ai_pattern_risk": 0,
+  "specificity_score": 0,
+  "originality_score": 0,
+  "detected_patterns": [
+    {
+      "category": "",
+      "severity": "",
+      "example": "",
+      "explanation": ""
+    }
+  ],
+  "improvements": []
+}
+```
+
+**Detection categories include:** generic openings, editorial commentary, vague claims, fake sources (Truth Layer integrated), repetition, buzzword overuse, inflated language, formulaic structure, excessive formatting, unnatural certainty, lack of personal voice.
+
+**Preferred patterns rewarded:** personal observation, specific details, clear opinion, lessons learned, concrete examples.
+
+### 6. Human Voice Agent (`agents/humanizer`)
+
+**May:** improve clarity, sentence flow, remove generic phrases, make tone natural.
+
+**Must not:** create experiences, add achievements, add metrics, add emotions that did not exist, invent stories.
+
+Consumes writing-quality `improvements` when present.
+
+### 7. AI Writing Critic Agent (`agents/critic`)
+
+**Purpose:** Quality control across truth, authenticity, AI-writing-pattern risk, and engagement potential.
+
+**References:** good/bad posts + ai-like/human-like writing-quality examples.
 
 **Scores**
 
 ```json
 {
+  "truth_score": 0,
+  "human_quality_score": 0,
+  "ai_pattern_risk": 0,
+  "engagement_score": 0,
   "originality": 0,
   "human_quality": 0,
   "engagement_probability": 0,
@@ -241,11 +291,11 @@ Final Content (+ optional Improve / Export)
 }
 ```
 
-**Detects:** generic phrases, weak hooks, unsupported claims, repetition, lack of examples, resemblance to bad exemplars
+**Detects:** generic phrases, weak hooks, unsupported claims, repetition, lack of examples, writing-quality framework patterns
 
-Note: `ai_pattern_score` is higher when more AI-like patterns are detected (worse). Other scores are “higher is better.”
+Note: `ai_pattern_risk` / `ai_pattern_score` are higher when more low-quality AI writing patterns are detected (worse). Other scores are “higher is better.” Never labels authorship.
 
-### 7. Engagement Predictor Agent (`agents/engagement_predictor`)
+### 8. Engagement Predictor Agent (`agents/engagement_predictor`)
 
 **Module:** `agents/engagement_predictor/score_agent.py`
 
@@ -437,25 +487,37 @@ Phase 1 does **not** build the dashboard first. It ships the core engine behind 
 Topic + format + content_mode + user_memory.json (+ optional evidence)
         │
         ▼
-   Writer Agent          ──► draft_v1
+  Research Agent
         │
         ▼
- Humanizer Agent         ──► draft_v2
+  Angle Finder Agent
         │
         ▼
-  Critic Agent           ──► quality scores + issues
-        │                    (uses good/bad post examples)
+  Strategist Agent
+        │
         ▼
- Engagement Predictor    ──► pre-publish weakness report
+   Writer Agent                 ──► draft_v1
+        │
+        ▼
+  Claim Checker (Truth Layer)   ──► grounded draft
+        │
+        ▼
+  AI Writing Quality Analyzer   ──► pattern risk + improvements
+        │
+        ▼
+ Humanizer Agent                ──► draft_v2 (style only)
+        │
+        ▼
+  Critic Agent                  ──► truth / authenticity / pattern risk / engagement
+        │
+        ▼
+ Engagement Predictor           ──► pre-publish weakness report
         │
         ▼
  Persist GeneratedContent + Feedback scores
-        │
-        └── optional: attach research_sources evidence records
-        └── later: record engagement_feedback after publish
 ```
 
-Trend / Research / Strategist / Designer remain **contract stubs** until Phase 3 (or earlier if pulled forward deliberately).
+Designer / trend scraping remain Phase 3 unless pulled forward deliberately.
 
 Optional improve loop (still Phase 1-compatible): if engagement `overall_score` is below a threshold, re-run humanizer (or a light rewrite) with `problems` + `improvements` injected — without collapsing agents into one prompt.
 

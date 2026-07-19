@@ -183,6 +183,32 @@ See [MEMORY_AND_ANGLES.md](./MEMORY_AND_ANGLES.md).
 
 ---
 
+## Phase 1.8 — AI Writing Quality Framework
+
+**Status:** implemented
+
+### Scope
+
+1. Knowledge layer: `knowledge/ai_writing_guidelines.json`, `examples/ai_like_posts.json`, `examples/human_like_posts.json`
+2. `agents/writing_quality/` analyzer (schemas, prompts, deterministic pattern detection)
+3. Pipeline insert after Claim Checker, before Humanizer
+4. Critic scores: truth / human authenticity / AI writing pattern risk / engagement
+5. Humanizer rules tightened (clarity/flow/generic cleanup only; no invented facts/emotions/stories)
+6. Tests in `tests/test_writing_quality.py`
+
+**Not an AI detector:** evaluates low-quality AI writing patterns only; never claims authorship.
+
+Pipeline:
+
+```text
+Research → Angle Finder → Strategist → Writer → Claim Checker →
+AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor
+```
+
+See [WRITING_QUALITY.md](./WRITING_QUALITY.md).
+
+---
+
 ## Phase 2 — Simple Web Interface
 
 ### Scope

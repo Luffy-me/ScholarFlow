@@ -9,7 +9,8 @@ This is **not** a generic AI text generator.
 The product behaves like a **content intelligence system**:
 
 ```text
-Research → Analyze → Strategize → Write → Humanize → Critique → Improve → Export
+Research → Angle Finder → Strategize → Write → Claim Check →
+Writing Quality Analyze → Humanize → Critique → Predict → Export
 ```
 
 Concrete behaviors:
@@ -18,11 +19,11 @@ Concrete behaviors:
 2. Research information from trusted sources.
 3. Analyze angles and decide strategy.
 4. Generate human-like first-person LinkedIn posts.
-5. Humanize drafts into authentic voice.
-6. Critique content quality before publishing.
-7. Predict engagement quality (weakness detection, not virality).
-8. Improve drafts from critique and prediction signals.
-9. Export final content (and later carousels).
+5. Ground claims against verified experience memory (Truth Layer).
+6. Score low-quality AI writing pattern risk (not AI detection / authorship claims).
+7. Humanize drafts into authentic voice without inventing facts.
+8. Critique truth, authenticity, pattern risk, and engagement potential.
+9. Predict engagement quality (weakness detection, not virality).
 10. Learn from the user’s real background and writing style over time.
 
 The goal is to help users turn **real knowledge, experiences, and research** into high-quality LinkedIn content.
@@ -139,8 +140,10 @@ Prioritize local models for privacy, cost, and offline capability.
 
 Before content is treated as final:
 
-1. **Critic** checks writing quality, evidence, and AI patterns.
-2. **Engagement Predictor** scores hook/originality/specificity/discussion potential and lists concrete problems + improvements.
+1. **Claim Checker** removes or rejects ungrounded personal claims.
+2. **AI Writing Quality Analyzer** scores pattern risk / specificity / originality and lists improvements. It does **not** claim content was written by AI.
+3. **Critic** evaluates truth, human authenticity, AI writing patterns, and engagement potential.
+4. **Engagement Predictor** scores hook/originality/specificity/discussion potential and lists concrete problems + improvements.
 
 The predictor does **not** claim viral success. It identifies weak content early.
 
@@ -166,7 +169,8 @@ The predictor does **not** claim viral success. It identifies weak content early
 | Content strategy | Choose audience, hook, opinion, structure |
 | Post generation | Multiple LinkedIn formats |
 | Humanization | Rewrite drafts into authentic voice |
-| Quality critique | Score originality, human quality, evidence, AI patterns |
+| Writing quality framework | Detect low-quality AI writing patterns; reward specific human voice |
+| Quality critique | Score truth, authenticity, pattern risk, engagement |
 | Engagement prediction | Pre-publish weakness detection with improvements |
 | Feedback learning | Capture real post performance for future optimization |
 | Source evidence | Optional claims with source, date, confidence |

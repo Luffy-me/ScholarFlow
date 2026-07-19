@@ -1,0 +1,203 @@
+{
+  "purpose": "Detect patterns commonly associated with low-quality AI writing and reward authentic human LinkedIn voice. This is NOT an AI detector and must never claim content was written by AI.",
+  "disclaimer": "Scores describe writing-pattern risk and authenticity signals only. Never label authorship as AI or human.",
+  "detection_categories": [
+    {
+      "id": "generic_opening",
+      "severity": "high",
+      "problem": "No specific viewpoint.",
+      "examples": [
+        "In today's rapidly evolving world",
+        "In the era of digital transformation",
+        "AI is changing everything",
+        "In today's world",
+        "Artificial intelligence is transforming",
+        "In the ever-changing landscape"
+      ]
+    },
+    {
+      "id": "editorial_commentary",
+      "severity": "medium",
+      "problem": "Talking about the content instead of providing insight.",
+      "examples": [
+        "It is important to note",
+        "It is worth mentioning",
+        "This article explores",
+        "In this article",
+        "This post will discuss",
+        "Let's unpack",
+        "Without further ado"
+      ]
+    },
+    {
+      "id": "vague_claims",
+      "severity": "high",
+      "problem": "Unsupported generalizations that require source, example, or evidence.",
+      "examples": [
+        "Many experts believe",
+        "Studies show",
+        "Companies are rapidly adopting",
+        "Research suggests",
+        "Everyone knows",
+        "It is widely known"
+      ],
+      "requires": ["source", "example", "evidence"]
+    },
+    {
+      "id": "fake_sources",
+      "severity": "critical",
+      "problem": "Invented statistics, fake research, fake citations, or fake URLs. Integrate with Truth Layer claim checker.",
+      "examples": [
+        "according to a recent study",
+        "a Harvard study found",
+        "statistics show that",
+        "http://fake-research.example"
+      ],
+      "integrate_with": "truth_layer_claim_checker"
+    },
+    {
+      "id": "repetition",
+      "severity": "medium",
+      "problem": "Repeating the same idea, unnecessary summaries, or redundant conclusions.",
+      "signals": [
+        "same sentence stem repeated",
+        "in conclusion restating the hook",
+        "to summarize what we already said"
+      ]
+    },
+    {
+      "id": "buzzword_overuse",
+      "severity": "high",
+      "problem": "Excessive hype vocabulary without concrete meaning.",
+      "examples": [
+        "revolutionary",
+        "groundbreaking",
+        "transformative",
+        "game-changing",
+        "game changer",
+        "unprecedented",
+        "paradigm shift",
+        "cutting-edge",
+        "next-level"
+      ],
+      "threshold": 2
+    },
+    {
+      "id": "inflated_language",
+      "severity": "medium",
+      "problem": "Overstated milestones instead of plain operational language.",
+      "examples": [
+        "This represents a transformative milestone",
+        "a monumental shift",
+        "unlock unprecedented value",
+        "redefine the future"
+      ],
+      "prefer": [
+        "This changes how teams work",
+        "This made our loop faster",
+        "This reduced rework"
+      ]
+    },
+    {
+      "id": "formulaic_structure",
+      "severity": "medium",
+      "problem": "Predictable templates, excessive numbered lists, or repeated contrast formulas.",
+      "examples": [
+        "X is not about A, it is about B",
+        "It's not X. It's Y.",
+        "Here are 5 tips",
+        "Step 1:",
+        "Tip #1"
+      ]
+    },
+    {
+      "id": "excessive_formatting",
+      "severity": "low",
+      "problem": "Too many headings, bullets, or unnatural bolding for LinkedIn prose.",
+      "signals": [
+        "many markdown headings",
+        "dense bullet lists",
+        "heavy **bold** usage"
+      ]
+    },
+    {
+      "id": "unnatural_certainty",
+      "severity": "high",
+      "problem": "Absolute claims that overstate inevitability.",
+      "examples": [
+        "will definitely",
+        "will replace",
+        "always",
+        "never fails",
+        "guaranteed to",
+        "inevitably"
+      ],
+      "prefer": [
+        "I think",
+        "likely",
+        "in my experience",
+        "often",
+        "tends to"
+      ]
+    },
+    {
+      "id": "lack_of_personal_voice",
+      "severity": "high",
+      "problem": "No personal observation, lesson, opinion, or specific experience.",
+      "missing_signals": [
+        "personal observation",
+        "lesson learned",
+        "opinion",
+        "specific experience"
+      ]
+    }
+  ],
+  "preferred_patterns": [
+    {
+      "id": "personal_observation",
+      "examples": [
+        "I noticed",
+        "While building",
+        "The surprising part was",
+        "I keep coming back to",
+        "I tested"
+      ]
+    },
+    {
+      "id": "specific_details",
+      "examples": [
+        "tools used",
+        "experiments",
+        "failures",
+        "verified numbers only"
+      ]
+    },
+    {
+      "id": "clear_opinion",
+      "examples": [
+        "I disagree with",
+        "My view is",
+        "I care more about",
+        "I would rather"
+      ]
+    },
+    {
+      "id": "lessons_learned",
+      "examples": [
+        "My biggest takeaway",
+        "What I learned",
+        "The lesson was",
+        "Next time I would"
+      ]
+    },
+    {
+      "id": "concrete_examples",
+      "examples": [
+        "named tools",
+        "named projects",
+        "one failure mode",
+        "one workflow step"
+      ]
+    }
+  ]
+}

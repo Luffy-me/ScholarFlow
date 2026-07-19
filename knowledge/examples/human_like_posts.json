@@ -1,0 +1,19 @@
+{
+  "posts": [
+    {
+      "id": "human_qwen_local",
+      "text": "I tested Qwen locally on my MacBook and noticed that workflow design mattered more than model size.\n\nThe surprising part was how often my evaluation loop, not the model, decided quality.\n\nMy biggest takeaway: write failing tests for generic phrasing before chasing bigger parameters.",
+      "traits": ["personal_observation", "specific_details", "lessons_learned", "clear_opinion"]
+    },
+    {
+      "id": "human_scholarflow",
+      "text": "I built ScholarFlow using RAG architecture.\n\nWhile building retrieval, I disagreed with the habit of stuffing more context into every prompt.\n\nWhat I learned: tighter questions beat longer context windows.",
+      "traits": ["specific_experience", "clear_opinion", "lessons_learned"]
+    },
+    {
+      "id": "human_failure",
+      "text": "I almost shipped a feature nobody asked for.\n\nIt looked impressive in demos. It created support debt in week one.\n\nNow I ask one question before building: what broken workflow does this replace?",
+      "traits": ["personal_observation", "concrete_examples", "clear_opinion"]
+    }
+  ]
+}

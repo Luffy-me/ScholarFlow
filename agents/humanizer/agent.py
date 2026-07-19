@@ -1,8 +1,18 @@
 """Human Voice Agent — rewrite toward authentic first-person writing.
 
-Truth Layer v2 constraint:
-Humanizer may only improve wording, structure, and clarity.
-It must NEVER invent experiences, metrics, clients, or achievements.
+AI Writing Quality Framework constraints:
+Humanizer may:
+- improve clarity
+- improve sentence flow
+- remove generic phrases
+- make tone natural
+
+Humanizer must NOT:
+- create experiences
+- add achievements
+- add metrics
+- add emotions that did not exist
+- invent stories
 """
 
 from __future__ import annotations
@@ -29,22 +39,35 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
         memory = payload.user_memory or load_user_memory()
         source = payload.text.strip()
         allowed = allowed_experience_texts(memory)
+        improvements = []
+        if isinstance(payload.extra, dict):
+            improvements = [str(x) for x in payload.extra.get("improvements", []) if str(x).strip()]
+
         system = (
             "You are a humanizing editor for LinkedIn drafts.\n"
             "You may ONLY:\n"
-            "- improve wording\n"
-            "- improve structure\n"
             "- improve clarity\n"
-            "You must NOT invent or add:\n"
-            "- experiences\n"
-            "- metrics or percentages\n"
-            "- clients or customers\n"
-            "- achievements\n"
-            "- quotes\n"
-            "- specific time references not already in the draft\n"
+            "- improve sentence flow\n"
+            "- remove generic phrases\n"
+            "- make tone natural\n"
+            "You must NOT:\n"
+            "- create experiences\n"
+            "- add achievements\n"
+            "- add metrics\n"
+            "- add emotions that did not exist in the draft\n"
+            "- invent stories\n"
+            "- add clients, quotes, or time references not already present\n"
             "Prefer first person when already present.\n"
             "Remove corporate language and fake enthusiasm.\n"
             f"Allowed experiences (do not expand beyond these): {allowed}\n"
+        )
+        if improvements:
+            system += (
+                "Apply these writing-quality improvements when possible without inventing facts:\n"
+                + "\n".join(f"- {item}" for item in improvements[:6])
+                + "\n"
+            )
+        system += (
             "If the draft is sparse after grounding, keep it sparse. Do not fill gaps with fiction."
         )
         result = await self.provider.generate(
@@ -80,12 +103,13 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
                     "first_person_count": scan.first_person_count,
                 },
                 "grounding_safe": check_claims(rewritten, memory).safe,
+                "applied_improvements": improvements,
             },
             meta={"provider": result.provider, "model": result.model},
         )
 
     def _deterministic_humanize(self, text: str, memory: dict) -> str:
-        # Style-only rewrite: never introduce new facts/metrics/clients.
+        # Style-only rewrite: never introduce new facts/metrics/clients/emotions/stories.
         base = (text or "").strip()
         scan = scan_text(base, memory)
         if base and not scan.has_generic_ai and scan.first_person_count >= 1:
@@ -93,7 +117,6 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
 
         projects = memory.get("projects") or []
         project = projects[0] if projects else "recent work"
-        # If we only have toxic generic source text, replace with a grounded scaffold.
         return (
             f"I keep coming back to lessons from {project}.\n\n"
             "I want the draft to stay specific, first person, and free of invented metrics.\n\n"

@@ -50,6 +50,18 @@ def load_bad_posts() -> dict[str, Any]:
     return load_json("knowledge/examples/bad_posts.json")
 
 
+def load_ai_writing_guidelines() -> dict[str, Any]:
+    return load_json("knowledge/ai_writing_guidelines.json")
+
+
+def load_ai_like_posts() -> dict[str, Any]:
+    return load_json("knowledge/examples/ai_like_posts.json")
+
+
+def load_human_like_posts() -> dict[str, Any]:
+    return load_json("knowledge/examples/human_like_posts.json")
+
+
 def allowed_experience_texts(memory: dict[str, Any] | None = None) -> list[str]:
     """Return only reusable, approved experience texts for generation/grounding.
 
