@@ -2,9 +2,15 @@
 
 ## Guiding Rule
 
-Ship a narrow, excellent MVP before expanding agents and integrations.
+Ship a strong **AI core engine** before the UI. Do **not** build the dashboard first.
 
 Do **not** build everything at once.
+
+Full product pipeline (target):
+
+```text
+Research → Analyze → Strategize → Write → Humanize → Critique → Improve → Export
+```
 
 ---
 
@@ -12,149 +18,212 @@ Do **not** build everything at once.
 
 **Deliverables**
 
-- [x] `docs/PRODUCT.md`
-- [x] `docs/ARCHITECTURE.md`
-- [x] `docs/DATABASE.md`
-- [x] `docs/ROADMAP.md`
+- [x] `docs/PRODUCT.md` (updated)
+- [x] `docs/ARCHITECTURE.md` (updated)
+- [x] `docs/DATABASE.md` (updated)
+- [x] `docs/ROADMAP.md` (updated)
 - [ ] Root `README.md` (after approval to implement)
-- [ ] Knowledge JSON contracts (`writing_rules`, `banned_patterns`, `user_style_profile`)
+- [ ] Knowledge contracts:
+  - `writing_rules.json`
+  - `banned_patterns.json`
+  - `user_style_profile.json`
+  - `user_memory.json`
+  - `examples/good_posts.json`
+  - `examples/bad_posts.json`
 
 **Exit criteria**
 
-- Architecture, MVP scope, and development order approved.
+- Updated architecture, MVP scope, and development order approved.
 
 ---
 
-## Phase 1 — MVP (build next)
+## Phase 1 — AI Core Engine (build next)
 
-### Product scope
+**Do not build the web dashboard in this phase.**
 
-1. User dashboard
-2. Topic input
-3. Ollama connection
-4. LinkedIn post generator
-5. Human voice rewriting
-6. AI quality checker
-7. Save generated posts
+### Product / technical scope
 
-### Technical scope
+1. Ollama connection
+2. Model abstraction layer
+3. Writer Agent
+4. Human Voice Agent
+5. Critic Agent
+6. Engagement Predictor Agent (`agents/engagement_predictor/score_agent.py`)
+7. Save generated content
+
+### Technical work breakdown
 
 | Area | Work |
 |---|---|
-| Monorepo skeleton | `apps/web`, `apps/api`, `agents/*` stubs, `models/ollama`, `knowledge/*`, `database/` |
-| API | health, Ollama status, generate pipeline, CRUD posts, writing profile |
-| Agents | writer, humanizer, critic (wired) |
-| Agents | researcher, strategist, designer, trend_analyzer (stubs/contracts only) |
+| Repo skeleton | `apps/api`, `agents/*`, `models/ollama`, `knowledge/*`, `database/` |
+| Knowledge | `user_memory.json`, writing rules, banned patterns, good/bad examples |
+| Model layer | Provider interface + Ollama adapter + FakeProvider |
+| Agents (wired) | writer, humanizer, critic, engagement_predictor |
+| Agents (stubs) | trend_analyzer, researcher, strategist, designer |
+| API | health, AI status, generate pipeline, save/list posts, memory read/update |
 | DB | users, writing_profiles, posts, generated_content, feedback |
-| Web | dashboard, generate flow, draft + scores view, settings for Ollama |
-| Tests | provider fake, banned patterns, API generate/save |
-| Docs | README + run instructions |
+| Tests | provider fake, memory gate, critic vs examples, engagement schema, API generate/save |
+| Docs | README + local runbook (API-first) |
 
-### Explicitly out of scope
+### Explicitly out of scope (Phase 1)
 
+- Web dashboard / Next.js UI
 - Live trend scraping
 - Full research ingestion
 - Carousel PDF/PNG export
-- Cloud LLM providers (interface only)
-- n8n workflows
-- Qdrant-backed memory
-- LinkedIn OAuth / publishing
+- Cloud LLM providers (interface stub only)
+- Browser extension
+- Analytics product
+- LinkedIn OAuth / publishing / scraping
 
 ### Exit criteria
 
-- End-to-end: topic → draft → humanize → critique → save works with local Ollama.
-- Critic returns five scores + detected issues.
-- Banned patterns from knowledge files are enforced or flagged.
+- API (or CLI) can run: topic → write → humanize → critique → engagement predict → save.
+- Critic returns scores and uses good/bad examples as references.
+- Engagement predictor returns the required JSON (`overall_score`, dimension scores, `problems`, `improvements`).
+- Personal claims are gated by `user_memory.json`.
+- Banned patterns are flagged.
+- Tests pass with FakeProvider (Ollama optional for local smoke).
 
 ---
 
-## Phase 2 — Research & Strategy Depth
+## Phase 2 — Simple Web Interface
 
-- Researcher agent with source capture (`research_sources`)
-- Strategist agent inserted before writer
-- Qdrant knowledge memory for exemplars and research chunks
-- Richer writing profile learning from user feedback
-- Async generation jobs via Redis
+### Scope
+
+- Topic input
+- Generate button
+- Results view (draft + critic scores + engagement prediction)
+- Edit content
+- Save drafts
+- Minimal settings (Ollama URL / default model / memory editor)
 
 ### Exit criteria
 
-- Posts can cite stored sources.
-- Strategy JSON influences hooks/structure measurably.
+- Non-developer can generate, review scores, edit, and save a draft via the UI.
+- UI never calls LLMs directly; all generation goes through the API.
 
 ---
 
-## Phase 3 — Trends & Carousels
+## Phase 3 — Advanced Features
 
-- Trend analyzer with RSS / HN / arXiv / GitHub trending connectors
-- Trend dashboard and “write about this” action
-- Carousel designer agent + slide JSON
-- PDF/PNG export to local filesystem
-- Design style presets
+### Scope
+
+- Trend discovery (Trend Research Agent + connectors)
+- Source analysis (Research Agent + `research_sources`)
+- Content Strategist wired into the live pipeline
+- Carousel generation + PDF/PNG export
+- Browser extension (optional packaging)
+- Analytics (generation quality trends, score distributions)
+
+### Also in this phase (or overlapping)
+
+- Qdrant-backed knowledge memory
+- Async jobs via Redis
+- Multi-provider adapters (OpenAI / Gemini / Anthropic) if needed
+- n8n-ready automation examples
 
 ### Exit criteria
 
-- User can pick a trend, generate a carousel script, and export slides.
+- User can pick a trend, research it, strategize, generate, and optionally export a carousel.
+- No LinkedIn scraping unless an approved approach is documented and accepted.
 
 ---
 
-## Phase 4 — Multi-provider & Automation
+## Development Order (when coding is approved)
 
-- OpenAI / Gemini / Anthropic adapters
-- Model routing policy (local preferred, cloud fallback)
-- n8n-ready webhook/job endpoints documented with examples
-- Optional cloud object storage for exports
+### Before writing any feature code, restate:
 
-### Exit criteria
+1. Updated architecture (this docs set)
+2. New files to create
+3. Dependencies
+4. Implementation sequence
 
-- Switching providers requires config only, not agent rewrites.
-- External automation can trigger and fetch generations.
+Then wait for confirmation if architecture changed again.
 
----
-
-## Phase 5 — Style Intelligence & Quality Hardening
-
-- Continuous style profile updates from accepted edits
-- Stronger anti-hallucination checks for personal claims
-- Evaluation harness (golden posts, regression on banned patterns)
-- Performance/latency budgets per pipeline stage
-
----
-
-## Development Order (Phase 1 implementation)
-
-When coding is approved, implement in this order:
+### Phase 1 implementation sequence
 
 1. **Repo skeleton & tooling**  
-   Package layout, lint/test runners, env samples, Docker Compose for Postgres (+ Redis optional).
+   API package layout, lint/test runners, env samples, Docker Compose for Postgres (Redis optional).
 
 2. **Knowledge contracts**  
-   `writing_rules.json`, `banned_patterns.json`, seed `user_style_profile.json`, example posts.
+   `user_memory.json`, `writing_rules.json`, `banned_patterns.json`, `examples/good_posts.json`, `examples/bad_posts.json`.
 
 3. **Database migrations**  
-   MVP tables first; empty migrations OK for deferred entities.
+   Phase 1 tables; stub deferred entities as needed.
 
 4. **Model provider interface + Ollama adapter**  
-   Health check, generate text, FakeProvider for tests.
+   Health check, generate text/structured, FakeProvider for tests.
 
 5. **Writer agent**  
-   Format-aware prompts; inject allowed experiences; apply writing rules.
+   Format-aware prompts; inject allowed experiences from user memory; apply writing rules.
 
 6. **Humanizer agent**  
    Rewrite pass with authenticity checklist.
 
 7. **Critic agent**  
-   Structured scores + rule-based banned pattern detection (hybrid: LLM + deterministic).
+   Structured scores + banned-pattern detection + good/bad example references.
 
-8. **Orchestrator + API routes**  
-   Sync pipeline for MVP; persist `generated_content` and `posts`.
+8. **Engagement Predictor agent**  
+   `score_agent.py` with required output schema; problems + improvements.
 
-9. **Web dashboard**  
-   Status, topic form, results panel, save action, minimal settings.
+9. **Orchestrator + API routes**  
+   Sync pipeline; persist `generated_content`, `posts`, and feedback scores.
 
 10. **Tests + README**  
-    Contract tests and local runbook.
+    Contract tests and API-first local runbook.
 
-Do not start trend connectors, carousel export, or cloud providers before the MVP loop is stable.
+### Phase 2 sequence (after Phase 1 stable)
+
+1. Next.js app skeleton (TypeScript strict, Tailwind, shadcn/ui)
+2. Generate page + results/edit/save
+3. Settings + memory editor
+4. UI tests / smoke checks
+
+### Phase 3 sequence
+
+1. Strategist + Researcher wiring
+2. Trend connectors
+3. Designer + export
+4. Extension / analytics as separate tracks
+
+Do **not** start Phase 3 features before the Phase 1 AI loop is stable.
+
+---
+
+## New Files Introduced by Architecture Updates
+
+| Path | Purpose |
+|---|---|
+| `agents/engagement_predictor/` | Engagement prediction package |
+| `agents/engagement_predictor/score_agent.py` | Score agent implementation |
+| `knowledge/user_memory.json` | Canonical personal context |
+| `knowledge/examples/good_posts.json` | Positive evaluation references |
+| `knowledge/examples/bad_posts.json` | Negative evaluation references |
+
+---
+
+## Planned Dependencies (implementation; not installed yet)
+
+### API / agents (Phase 1)
+
+- Python 3.11+
+- FastAPI, Uvicorn
+- Pydantic v2
+- SQLAlchemy + Alembic
+- `httpx` (Ollama HTTP client)
+- pytest
+- PostgreSQL (Docker)
+
+### Explicitly deferred
+
+- Next.js / React / Tailwind / shadcn / Framer Motion → Phase 2
+- Qdrant client → Phase 3
+- Redis client → when async jobs are needed
+- Cloud LLM SDKs → when adapters are approved
+- LinkedIn SDKs / scrapers → never without approved approach
+
+Avoid unnecessary dependencies.
 
 ---
 
@@ -162,18 +231,21 @@ Do not start trend connectors, carousel export, or cloud providers before the MV
 
 | Risk | Mitigation |
 |---|---|
-| Local models produce generic prose | Strong knowledge rules + humanizer + critic gate |
-| Models invent personal stories | Allowed-experiences context gate + critic claim check |
-| Ollama unavailable | Clear UI status; do not fake successful generations |
-| Scope creep into full agent suite | Phase gates in this roadmap |
-| Over-dependence on one mega-prompt | Keep agents separate with schemas |
+| Local models produce generic prose | Rules + humanizer + critic + engagement predictor |
+| Models invent personal stories | `user_memory.json` context gate + critic claim check |
+| Engagement scores mistaken for virality | Docs + UI copy: weakness detection only |
+| Ollama unavailable | Clear API status errors; never fake success |
+| UI built before engine quality | Phase gates: AI core → web → advanced |
+| Mega-prompt collapse | Independent agent modules with schemas |
+| Fake LinkedIn integrations | Explicit non-goals; no invented APIs |
 
 ---
 
 ## Definition of Done (any phase)
 
 - Documented behavior matches implemented behavior
-- Types/schemas enforced
+- Types/schemas enforced (TypeScript strict / Python type hints)
 - Tests for new logic
 - No invented external integrations
-- README / docs updated for user-facing changes
+- No LinkedIn scraping without approval
+- README / docs updated for user-facing or architectural changes
