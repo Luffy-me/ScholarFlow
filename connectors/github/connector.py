@@ -1,16 +1,11 @@
-"""Offline-capable github connector."""
+"""GitHub connector — delegates to trending search (compat name)."""
 
 from __future__ import annotations
 
-from connectors.base import OfflineFixtureConnector, SourceDocument
+from connectors.github_trending.connector import GithubTrendingConnector, _live
+from connectors.real_base import RealConnector
 
 
-class GithubConnector(OfflineFixtureConnector):
-    """github connector — works offline; network adapters can replace collect() later."""
-
+class GithubConnector(RealConnector):
     def __init__(self) -> None:
-        super().__init__("github", tier=1)
-
-
-async def collect(query: str, *, limit: int = 5) -> list[SourceDocument]:
-    return await GithubConnector().collect(query, limit=limit)
+        super().__init__("github", tier=1, live_collect=_live)

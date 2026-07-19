@@ -1,16 +1,21 @@
-"""Offline-capable huggingface connector."""
+"""Hugging Face — models hub (compat alias)."""
 
 from __future__ import annotations
 
-from connectors.base import OfflineFixtureConnector, SourceDocument
+from connectors.base import SourceDocument
+from connectors.huggingface_models import connector as models
+from connectors.real_base import RealConnector
 
 
-class HuggingfaceConnector(OfflineFixtureConnector):
-    """huggingface connector — works offline; network adapters can replace collect() later."""
+async def _live(query: str, limit: int) -> list[SourceDocument]:
+    docs = await models._live(query, limit)
+    for doc in docs:
+        doc.source_type = "huggingface"
+        if doc.id.startswith("huggingface_models:"):
+            doc.id = "huggingface:" + doc.id.split(":", 1)[1]
+    return docs
 
+
+class HuggingfaceConnector(RealConnector):
     def __init__(self) -> None:
-        super().__init__("huggingface", tier=1)
-
-
-async def collect(query: str, *, limit: int = 5) -> list[SourceDocument]:
-    return await HuggingfaceConnector().collect(query, limit=limit)
+        super().__init__("huggingface", tier=1, live_collect=_live)

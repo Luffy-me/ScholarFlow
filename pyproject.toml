@@ -28,4 +28,4 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.setuptools.packages.find]
-include = ["apps*", "agents*", "models*", "database*", "shared*"]
+include = ["apps*", "agents*", "models*", "database*", "shared*", "connectors*", "acquisition*", "knowledge*", "knowledge_graph*", "carousel*", "design*", "renderers*", "export*", "schemas*"]

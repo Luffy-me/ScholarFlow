@@ -1,16 +1,22 @@
-"""Offline-capable lobsters connector."""
+"""Lobsters — public RSS."""
 
 from __future__ import annotations
 
-from connectors.base import OfflineFixtureConnector, SourceDocument
+from connectors.base import SourceDocument
+from connectors.http_utils import fetch_text, parse_rss_items
+from connectors.real_base import RealConnector, docs_from_rss_items
+
+FEED_URL = "https://lobste.rs/rss"
 
 
-class LobstersConnector(OfflineFixtureConnector):
-    """lobsters connector — works offline; network adapters can replace collect() later."""
+async def _live(query: str, limit: int) -> list[SourceDocument]:
+    xml = await fetch_text(FEED_URL)
+    if not xml:
+        return []
+    items = parse_rss_items(xml, limit=max(limit, 15))
+    return docs_from_rss_items(items, connector="lobsters", tier=2, query=query)[:limit]
 
+
+class LobstersConnector(RealConnector):
     def __init__(self) -> None:
-        super().__init__("lobsters", tier=2)
-
-
-async def collect(query: str, *, limit: int = 5) -> list[SourceDocument]:
-    return await LobstersConnector().collect(query, limit=limit)
+        super().__init__("lobsters", tier=2, live_collect=_live)

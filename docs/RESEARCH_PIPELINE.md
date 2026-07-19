@@ -17,14 +17,11 @@
 
 Each connector implements:
 
-`collect`, `search`, `summarize`, `extract`, `normalize`, `confidence`
+`collect`, `normalize`, `extract_metadata`, `extract_entities`, `extract_evidence`, `calculate_confidence`, `deduplicate`
 
-Shipped (offline-capable fixtures):
+(+ `search` / `summarize` / `extract` / `confidence` compat helpers)
 
-- Tier 1: `official_docs`, `arxiv`, `paperswithcode`, `github`, `huggingface`, `awesome_lists`
-- Tier 2: `hackernews`, `lobsters`, `reddit`, `devto`, `medium`, `producthunt`, `rss`, `google_news`, `stackoverflow`
-- Tier 3: `youtube`
-- Placeholders: `linkedin`, `x`, `news_api`
+See `docs/RESEARCH_ACQUISITION.md` for the Phase 5 acquisition layer (source registry, RSS registry, scheduler, storage).
 
 Register future providers without agent changes:
 
@@ -32,8 +29,6 @@ Register future providers without agent changes:
 from connectors.registry import register_connector
 register_connector("tavily", TavilyConnector)
 ```
-
-Supported future resources (architecture-ready): Firecrawl, Jina, Tavily, Exa, Perplexity, OpenAlex, Semantic Scholar, Crossref, GitHub Search API, Reddit API, NewsAPI, GDELT, RSS.
 
 ## Trend detector output
 

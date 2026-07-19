@@ -1,10 +1,12 @@
 """Provider-agnostic research connector interface.
 
 External APIs are optional. Offline/local fixtures must always work.
+Every connector implements the acquisition contract used by Phase 5.
 """
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -16,8 +18,16 @@ SOURCE_TIERS: dict[str, int] = {
     "official_docs": 1,
     "arxiv": 1,
     "paperswithcode": 1,
+    "semantic_scholar": 1,
+    "semanticscholar": 1,
+    "openalex": 1,
+    "crossref": 1,
     "github": 1,
+    "github_trending": 1,
+    "github_releases": 1,
     "huggingface": 1,
+    "huggingface_models": 1,
+    "huggingface_papers": 1,
     "awesome_lists": 1,
     # Tier 2
     "hackernews": 2,
@@ -25,10 +35,23 @@ SOURCE_TIERS: dict[str, int] = {
     "reddit": 2,
     "devto": 2,
     "medium": 2,
+    "hashnode": 2,
     "producthunt": 2,
     "rss": 2,
     "google_news": 2,
     "stackoverflow": 2,
+    "stackoverflow_blog": 2,
+    # Vendor / eng blogs
+    "openai_blog": 1,
+    "anthropic_blog": 1,
+    "deepmind_blog": 1,
+    "cloudflare_blog": 2,
+    "stripe_engineering": 2,
+    "vercel_blog": 2,
+    "linear_blog": 2,
+    "netflix_tech_blog": 2,
+    "uber_engineering": 2,
+    "shopify_engineering": 2,
     # Tier 3
     "youtube": 3,
     # Future
@@ -68,8 +91,17 @@ class SourceDocument:
         }
 
 
+_ENTITY_RE = re.compile(
+    r"\b([A-Z][A-Za-z0-9_+-]{2,}(?:\s+[A-Z][A-Za-z0-9_+-]{2,}){0,3})\b"
+)
+_TECH_RE = re.compile(
+    r"\b(RAG|LLM|API|GPU|CPU|SQL|HTTP|JSON|Transformer|PyTorch|TensorFlow|"
+    r"Kubernetes|Docker|Ollama|Qwen|DeepSeek|OpenAI|Anthropic)\b"
+)
+
+
 class BaseConnector(ABC):
-    """Every connector implements collect/search/summarize/extract/normalize/confidence."""
+    """Acquisition contract: collect/normalize/metadata/entities/evidence/confidence/dedupe."""
 
     name: str = "base"
     tier: int = 2
@@ -97,7 +129,49 @@ class BaseConnector(ABC):
         payload = document.normalize()
         payload["source_type"] = payload.get("source_type") or self.name
         payload["tier"] = SOURCE_TIERS.get(self.name, self.tier)
+        payload["metadata"] = {
+            **payload.get("metadata", {}),
+            **self.extract_metadata(document),
+        }
         return payload
+
+    def extract_metadata(self, document: SourceDocument) -> dict[str, Any]:
+        return {
+            "connector": self.name,
+            "tier": SOURCE_TIERS.get(self.name, self.tier),
+            "url": document.url,
+            "author": document.author,
+            "published_at": document.published_at,
+            "title": document.title,
+            "has_content": bool(document.content),
+            **dict(document.metadata or {}),
+        }
+
+    def extract_entities(self, document: SourceDocument) -> list[str]:
+        text = f"{document.title} {document.snippet} {document.content}"
+        found = set(_TECH_RE.findall(text))
+        for match in _ENTITY_RE.findall(text):
+            if len(match) >= 3:
+                found.add(match.strip())
+        return sorted(found)[:25]
+
+    def extract_evidence(self, document: SourceDocument) -> list[dict[str, Any]]:
+        claims = []
+        for sentence in self._sentences(document):
+            claims.append(
+                {
+                    "claim": sentence,
+                    "supporting_sources": [document.id or document.url or document.title],
+                    "contradicting_sources": [],
+                    "confidence": self.calculate_confidence(document),
+                    "verified": self.tier == 1 and bool(document.url),
+                    "source_type": self.name,
+                }
+            )
+        return claims[:8]
+
+    def calculate_confidence(self, document: SourceDocument) -> float:
+        return self.confidence(document)
 
     def confidence(self, document: SourceDocument) -> float:
         base = 0.85 if self.tier == 1 else 0.65 if self.tier == 2 else 0.45
@@ -105,7 +179,31 @@ class BaseConnector(ABC):
             base += 0.05
         if document.content and len(document.content) > 120:
             base += 0.05
+        if document.published_at:
+            base += 0.02
         return max(0.0, min(1.0, base))
+
+    def deduplicate(self, documents: list[SourceDocument]) -> list[SourceDocument]:
+        seen_urls: set[str] = set()
+        seen_titles: set[str] = set()
+        unique: list[SourceDocument] = []
+        for doc in documents:
+            url_key = (doc.url or "").strip().lower()
+            title_key = re.sub(r"\s+", " ", (doc.title or "").strip().lower())
+            if url_key and url_key in seen_urls:
+                continue
+            if title_key and title_key in seen_titles:
+                continue
+            if url_key:
+                seen_urls.add(url_key)
+            if title_key:
+                seen_titles.add(title_key)
+            unique.append(doc)
+        return unique
+
+    def _sentences(self, document: SourceDocument) -> list[str]:
+        text = (document.content or document.snippet or document.title or "").strip()
+        return [p.strip() for p in text.replace("!", ".").split(".") if len(p.strip()) > 24][:8]
 
 
 class OfflineFixtureConnector(BaseConnector):
@@ -124,7 +222,10 @@ class OfflineFixtureConnector(BaseConnector):
                 id=f"{self.name}:{q.lower().replace(' ', '-')}:{i}",
                 title=f"{q} — {self.name} perspective #{i + 1}",
                 url=f"local://{self.name}/{i}",
-                snippet=f"Offline {self.name} signal about {q}: practitioners discuss tradeoffs and constraints.",
+                snippet=(
+                    f"Offline {self.name} signal about {q}: practitioners discuss "
+                    f"tradeoffs and constraints."
+                ),
                 content=(
                     f"Local fixture from {self.name} on {q}. "
                     f"Recurring theme: evaluation quality and workflow design matter more than slogans. "
@@ -135,6 +236,6 @@ class OfflineFixtureConnector(BaseConnector):
                 confidence=0.55 if self.tier > 1 else 0.8,
                 metadata={"offline": True, "connector": self.name},
             )
-            doc.confidence = self.confidence(doc)
+            doc.confidence = self.calculate_confidence(doc)
             docs.append(doc)
-        return docs
+        return self.deduplicate(docs)

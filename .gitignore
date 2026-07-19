@@ -11,3 +11,4 @@ build/
 *.egg-info/
 research_sources/*.json
 !research_sources/README.md
+data/acquisition/
