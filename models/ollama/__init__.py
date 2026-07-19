@@ -1,3 +1,3 @@
-from models.ollama.provider import OllamaProvider
+from models.ollama.provider import OllamaProvider, OllamaUnavailableError
 
-__all__ = ["OllamaProvider"]
+__all__ = ["OllamaProvider", "OllamaUnavailableError"]

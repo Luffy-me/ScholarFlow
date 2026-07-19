@@ -44,6 +44,35 @@ curl -X POST http://localhost:8000/api/v1/generate \
   -d '{"topic":"local AI evaluation loops","content_mode":"founder","format":"short"}'
 ```
 
+## Phase 1.5 — Real AI Validation
+
+```bash
+# Ensure Ollama is running and the model is pulled
+ollama serve
+ollama pull qwen3:8b
+
+export OLLAMA_MODEL=qwen3:8b
+export OLLAMA_THINK=false
+
+# Single generation via CLI
+python -m apps.api.cli.generate \
+  --topic "Why local AI evaluation loops matter" \
+  --mode founder \
+  --audience "technical founders"
+
+# Dataset validation (examples/test_topics.json)
+python -m apps.api.cli.validate --out examples/validation_report.json
+```
+
+Environment:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama endpoint |
+| `OLLAMA_MODEL` | `qwen3:8b` | Model name |
+| `OLLAMA_THINK` | `false` | Disable Qwen3 hidden thinking tokens |
+| `OLLAMA_NUM_CTX` | `4096` | Context window |
+
 ## AI evaluation tests
 
 ```bash

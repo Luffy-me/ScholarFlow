@@ -9,6 +9,7 @@ class GenerateRequest(BaseModel):
     topic: str
     content_mode: str = "founder"
     format: str = "short"
+    audience: str = ""
     save: bool = True
 
 

@@ -50,19 +50,28 @@ class WriterAgent(Agent[WriterInput, WriterOutput]):
         user = (
             f"Topic: {payload.topic}\n"
             f"Format: {payload.format}\n"
-            "Write a LinkedIn post draft now."
         )
+        audience = str((payload.extra or {}).get("audience") or "").strip()
+        if audience:
+            user += f"Audience: {audience}\n"
+        user += "Write a LinkedIn post draft now."
 
         result = await self.provider.generate(
             [ChatMessage(role="system", content=system), ChatMessage(role="user", content=user)],
             temperature=0.5,
         )
         draft = result.text.strip()
+        # Strip accidental markdown fences from local models.
+        draft = re.sub(r"^```(?:markdown|text)?\s*", "", draft)
+        draft = re.sub(r"\s*```$", "", draft).strip()
         draft, rejected = self._strip_ungrounded_claims(draft, allowed)
         scan = scan_text(draft, memory)
 
-        # If provider produced banned generic openings, rewrite deterministically.
-        if scan.has_generic_ai or scan.has_weak_hook or not scan.has_strong_first_person:
+        # Soft guard: keep real-model drafts for evaluation unless clearly unusable.
+        unusable = (not draft) or scan.has_fake_experience or (
+            scan.has_generic_ai and scan.first_person_count == 0
+        )
+        if unusable or scan.first_person_count == 0:
             draft = self._deterministic_draft(payload.topic, mode_key, allowed, memory)
             rejected = []
             scan = scan_text(draft, memory)

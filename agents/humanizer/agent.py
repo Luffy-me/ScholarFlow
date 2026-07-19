@@ -36,9 +36,14 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
             temperature=0.4,
         )
         rewritten = result.text.strip() or source
+        rewritten = rewritten.replace("```markdown", "").replace("```", "").strip()
         scan = scan_text(rewritten, memory)
 
-        if scan.has_generic_ai or not scan.has_strong_first_person:
+        # Keep model output for evaluation unless it is empty or invents experiences.
+        if (not rewritten) or scan.has_fake_experience:
+            rewritten = self._deterministic_humanize(source or payload.topic, memory)
+            scan = scan_text(rewritten, memory)
+        elif scan.has_generic_ai and not scan.has_strong_first_person:
             rewritten = self._deterministic_humanize(source or payload.topic, memory)
             scan = scan_text(rewritten, memory)
 

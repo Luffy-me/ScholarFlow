@@ -19,6 +19,7 @@ async def run_generation_pipeline(
     topic: str,
     content_mode: str = "founder",
     format: str = "short",
+    audience: str = "",
     user_memory: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     memory = user_memory or load_user_memory()
@@ -30,7 +31,13 @@ async def run_generation_pipeline(
     predictor = EngagementPredictorAgent(provider)
 
     written = await writer.run(
-        WriterInput(topic=topic, content_mode=content_mode, format=format, user_memory=memory)
+        WriterInput(
+            topic=topic,
+            content_mode=content_mode,
+            format=format,
+            user_memory=memory,
+            extra={"audience": audience} if audience else {},
+        )
     )
     humanized = await humanizer.run(HumanizerInput(text=written.text, user_memory=memory))
     critiqued = await critic.run(CriticInput(text=humanized.text, user_memory=memory))
@@ -43,6 +50,7 @@ async def run_generation_pipeline(
         "topic": topic,
         "content_mode": content_mode,
         "format": format,
+        "audience": audience,
         "draft": written.text,
         "final_text": humanized.text,
         "critic": {

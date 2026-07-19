@@ -127,7 +127,28 @@ Tests use `FakeProvider` and deterministic rule helpers — they must not requir
 
 ---
 
-## Phase 2 — Simple Web Interface
+## Phase 1.5 — Real AI Validation
+
+**Status:** implemented (CLI + Ollama wiring + dataset + report)
+
+### Scope
+
+1. OllamaProvider availability detection + `OLLAMA_MODEL` config (default `qwen3:8b`)
+2. CLI: `python -m apps.api.cli.generate`
+3. Dataset: `examples/test_topics.json`
+4. Real generation evaluation report: `docs/VALIDATION_PHASE1_5.md`
+
+### Exit criteria
+
+- [x] Detect Ollama availability and fail clearly when offline/missing model
+- [x] Configurable model via `OLLAMA_MODEL`
+- [x] CLI prints draft, humanized text, critic scores, engagement scores
+- [x] Sample topics cover AI, startups, economics, software engineering
+- [x] Real generation run completed with findings + recommendations
+
+See [VALIDATION_PHASE1_5.md](./VALIDATION_PHASE1_5.md).
+
+---
 
 ### Scope
 

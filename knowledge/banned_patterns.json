@@ -33,6 +33,11 @@
     "I scaled to millions",
     "my Fortune 500 clients",
     "I raised \\$[0-9]+[MmBb]",
-    "I discovered during my research that"
+    "I discovered during my research that",
+    "for a client",
+    "retention jumped by",
+    "failed \\d+% of the time",
+    "grew \\d+%",
+    "increased .* by \\d+%"
   ]
 }

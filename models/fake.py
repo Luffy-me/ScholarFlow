@@ -57,8 +57,8 @@ class FakeProvider(ModelProvider):
             )
         else:
             text = (
-                "I spent time testing this workflow, and one pattern stood out.\n\n"
-                "Specific systems beat generic advice.\n\n"
+                "I spent time testing this workflow, and one pattern stood out to me.\n\n"
+                "I care more about specific systems than generic advice.\n\n"
                 "What have you tested recently?"
             )
         return GenerateResult(text=text, model=model or "fake-model", provider=self.name)

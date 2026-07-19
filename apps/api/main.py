@@ -44,7 +44,12 @@ app = FastAPI(
 def get_provider():
     if settings.use_fake_provider:
         return FakeProvider()
-    return OllamaProvider(base_url=settings.ollama_base_url, default_model=settings.default_model)
+    return OllamaProvider(
+        base_url=settings.ollama_base_url,
+        default_model=settings.ollama_model,
+        think=settings.ollama_think,
+        num_ctx=settings.ollama_num_ctx,
+    )
 
 
 def _ensure_local_user(session: Session) -> User:
@@ -129,6 +134,7 @@ async def generate(payload: GenerateRequest, session: Session = Depends(get_sess
         topic=payload.topic,
         content_mode=payload.content_mode,
         format=payload.format,
+        audience=payload.audience,
     )
 
     if payload.save:

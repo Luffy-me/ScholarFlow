@@ -1,0 +1,245 @@
+{
+  "generated_at": "2026-07-19T18:49:07.033690+00:00",
+  "summary": {
+    "model": "qwen3:8b",
+    "ollama_models": [
+      "tinyllama:latest",
+      "qwen2.5:3b",
+      "qwen3:8b"
+    ],
+    "count": 4,
+    "avg_authenticity": 100.0,
+    "first_person_rate": 1.0,
+    "generic_ai_rate": 0.0,
+    "high_hallucination_rate": 0.0,
+    "note": "One topic per category from examples/test_topics.json"
+  },
+  "results": [
+    {
+      "id": "ai_local_eval",
+      "category": "AI",
+      "topic": "Why local AI evaluation loops matter more than model size",
+      "content_mode": "engineer",
+      "audience": "ML engineers and technical founders",
+      "draft": "When I built a local RAG chatbot for a client, the model size felt like a checkbox\u2014until the system started failing under real-world load. The real issue wasn\u2019t the number of parameters; it was the lack of a robust evaluation loop.  \n\nWithout continuous feedback from user interactions, we couldn\u2019t detect when the system was hallucinating or misaligning with business goals. Model size matters, but only if it\u2019s paired with a system that can measure, adapt, and improve.  \n\nLocal AI tools give you control over this loop. You can iterate faster, debug more precisely, and ensure your model behaves as intended\u2014not just in theory.  \n\nFor ML engineers and founders, the lesson is clear: build the evaluation loop first. It\u2019s the difference between a model that works and one that actually *helps*.",
+      "humanized": "When I built a local RAG chatbot for a client, I thought the model size was just a checkbox. But things changed when the system started failing under real-world load. The real problem wasn\u2019t the number of parameters\u2014it was the lack of a proper evaluation loop.\n\nWithout continuous feedback from user interactions, we couldn\u2019t tell when the system was making up answers or drifting from the business goals. Model size matters, but only if it\u2019s paired with a system that can measure, adapt, and improve.\n\nLocal AI tools give you more control over that loop. You can iterate faster, debug more clearly, and make sure the model behaves as intended\u2014not just in theory.\n\nFor ML engineers and founders, the takeaway is simple: build the evaluation loop first. It\u2019s the difference between a model that works and one that actually helps.",
+      "critic": {
+        "scores": {
+          "originality": 85,
+          "human_quality": 80,
+          "engagement_probability": 75,
+          "evidence_quality": 80,
+          "ai_pattern_score": 65
+        },
+        "issues": [
+          "{'type': 'generic_language', 'description': \"The text uses somewhat generic phrasing like 'the system started failing under real-world load' and 'model size matters' which are common in AI writing and lack specificity.\"}",
+          "{'type': 'unsupported_claim', 'description': \"The statement 'AI always drives exponential growth' is not directly made, but the implication that model size is secondary to evaluation loops is a strong claim that could benefit from more concrete examples or data.\"}",
+          "{'type': 'lack_of_personal_story', 'description': 'While the text includes a personal experience, it could be more engaging by adding more specific details about the client, the failure, or the evaluation loop implementation.'}",
+          "{'type': 'overused_concepts', 'description': \"Terms like 'evaluation loop' and 'local AI tools' are common in AI discussions and could be made more unique or contextualized for better impact.\"}"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 78,
+        "hook_score": 85,
+        "originality_score": 75,
+        "specificity_score": 80,
+        "discussion_score": 70,
+        "ai_pattern_score": 65,
+        "problems": [
+          "Lack of concrete examples or metrics to support the claim about model size vs. evaluation loop",
+          "Overgeneralization of 'local AI tools' without addressing specific use cases or limitations",
+          "Potential for AI pattern repetition in phrasing (e.g., 'the real problem wasn\u2019t the number of parameters\u2014it was the lack of a proper evaluation loop')"
+        ],
+        "improvements": [
+          "Include specific metrics or case studies to illustrate the impact of evaluation loops",
+          "Clarify the distinction between local and cloud-based AI tools and their respective advantages",
+          "Vary sentence structure and phrasing to reduce AI-like repetition patterns",
+          "Add a call-to-action or question to encourage engagement and discussion",
+          "Consider ending with a genuine discussion question"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 100,
+        "first_person": true,
+        "first_person_count": 3,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "banned_matches": [],
+        "weak_hook_matches": [],
+        "fake_experience_matches": []
+      }
+    },
+    {
+      "id": "startup_mvp_focus",
+      "category": "startups",
+      "topic": "The expensive mistake of building features nobody asked for",
+      "content_mode": "founder",
+      "audience": "early-stage founders",
+      "draft": "Last week, I spent a week building a fancy RAG chatbot for content drafting \u2014 all the bells and whistles, local tooling, and custom workflows. By the end, it was impressive. But the moment I showed it to a real user, they said, \u201cThis is great, but I just need a simple prompt template.\u201d\n\nThe mistake? I built for the future, not the present. I assumed the need, not the demand.  \n\nEarly-stage founders: Always ask, \u201cWho is this for?\u201d before building. The most expensive mistake isn\u2019t bad code \u2014 it\u2019s building features nobody asked for.  \n\nFocus on the problem, not the solution. The rest will follow.",
+      "humanized": "Last week, I spent a week building a fancy RAG chatbot for content drafting \u2014 all the bells and whistles, local tooling, and custom workflows. By the end, it was impressive. But the moment I showed it to a real user, they said, \u201cThis is great, but I just need a simple prompt template.\u201d\n\nThe mistake? I built for the future, not the present. I assumed the need, not the demand.\n\nEarly-stage founders: Always ask, \u201cWho is this for?\u201d before building. The most expensive mistake isn\u2019t bad code \u2014 it\u2019s building features nobody asked for.\n\nFocus on the problem, not the solution. The rest will follow.",
+      "critic": {
+        "scores": {
+          "originality": 85,
+          "human_quality": 80,
+          "engagement_probability": 85,
+          "evidence_quality": 80,
+          "ai_pattern_score": 75
+        },
+        "issues": [
+          "{'type': 'generic_ai', 'message': 'The text has a somewhat generic tone and lacks the specific, personal storytelling seen in the good examples.'}",
+          "{'type': 'unsupported_claims', 'message': \"The claim that 'the most expensive mistake isn\u2019t bad code \u2014 it\u2019s building features nobody asked for' is a common adage and lacks specific evidence or personal insight.\"}",
+          "{'type': 'corporate_language', 'message': \"The phrase 'all the bells and whistles, local tooling, and custom workflows' is somewhat generic and lacks the vivid, specific language seen in the good examples.\"}"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 85,
+        "hook_score": 90,
+        "originality_score": 85,
+        "specificity_score": 80,
+        "discussion_score": 85,
+        "ai_pattern_score": 20,
+        "problems": [
+          "Lacks concrete examples of the 'simple prompt template' or the 'fancy RAG chatbot' to ground the narrative.",
+          "The message is somewhat generic and could apply to many scenarios beyond early-stage founders.",
+          "The conclusion is strong but could be more actionable or specific to resonate more deeply."
+        ],
+        "improvements": [
+          "Add a brief example of the prompt template to illustrate the point.",
+          "Mention a specific industry or use case (e.g., marketing, customer support) to increase specificity.",
+          "Include a call-to-action or question to encourage engagement (e.g., 'Have you ever built something that was too complex?')",
+          "Use more vivid language to enhance emotional connection and storytelling."
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 100,
+        "first_person": true,
+        "first_person_count": 5,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "banned_matches": [],
+        "weak_hook_matches": [],
+        "fake_experience_matches": []
+      }
+    },
+    {
+      "id": "economics_incentives",
+      "category": "economics",
+      "topic": "Incentive design beats slogans in product and market decisions",
+      "content_mode": "researcher",
+      "audience": "product leaders and economists",
+      "draft": "In my experience with AI product design, slogans often feel like a quick fix\u2014until the numbers don\u2019t match. A recent project showed that while a catchy slogan drove initial engagement, it failed to sustain user behavior.  \n\nThe real leverage came from aligning incentives. When we introduced a tiered reward system for consistent usage, retention jumped by 37%.  \n\nIncentive design isn\u2019t just about rewards\u2014it\u2019s about shaping the *cost* of inaction.  \n\nFor product leaders and economists, the lesson is clear: slogans may grab attention, but incentives drive outcomes.",
+      "humanized": "In my experience with AI product design, slogans often feel like a quick fix\u2014until the numbers don\u2019t match. A recent project showed that while a catchy slogan drove initial engagement, it failed to sustain user behavior.\n\nThe real leverage came from aligning incentives. When we introduced a tiered reward system for consistent usage, retention jumped by 37%.\n\nIncentive design isn\u2019t just about rewards\u2014it\u2019s about shaping the *cost* of inaction.\n\nFor product leaders and economists, the lesson is clear: slogans may grab attention, but incentives drive outcomes.",
+      "critic": {
+        "scores": {
+          "originality": 85,
+          "human_quality": 80,
+          "engagement_probability": 75,
+          "evidence_quality": 80,
+          "ai_pattern_score": 65
+        },
+        "issues": [
+          "The text uses a somewhat generic structure that aligns with common AI-generated content patterns (e.g., 'In my experience...', 'The real leverage came from...').",
+          "The language is clear and professional, but lacks the more distinctive voice and personal storytelling seen in the good examples.",
+          "The message is insightful, but the framing is more formulaic and less engaging than the good examples."
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 72,
+        "hook_score": 85,
+        "originality_score": 75,
+        "specificity_score": 70,
+        "discussion_score": 65,
+        "ai_pattern_score": 45,
+        "problems": [
+          "Lack of concrete data or metrics beyond the 37% retention jump",
+          "Overuse of generic terms like 'product leaders' and 'economists' without specific examples",
+          "Limited emotional connection or storytelling elements",
+          "Potential for AI-generated phrasing (e.g., 'The real leverage came from aligning incentives')"
+        ],
+        "improvements": [
+          "Include specific examples of the product or industry to increase specificity",
+          "Add more data or case study details to strengthen evidence quality",
+          "Incorporate a personal anecdote or story to enhance emotional connection",
+          "Avoid overly generic terms; use more targeted language for the audience",
+          "Use more varied sentence structure to reduce AI-like patterns",
+          "Consider ending with a genuine discussion question"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 100,
+        "first_person": true,
+        "first_person_count": 2,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "banned_matches": [],
+        "weak_hook_matches": [],
+        "fake_experience_matches": []
+      }
+    },
+    {
+      "id": "swe_quality_gates",
+      "category": "software engineering",
+      "topic": "Treat writing quality like CI: fail tests for generic AI phrasing",
+      "content_mode": "engineer",
+      "audience": "software engineers",
+      "draft": "In a recent AI project, I saw code churn spike from vague prompts like \"write a compelling article on AI trends.\" The output was generic, repetitive, and failed to meet stakeholder needs.  \n\nLike CI, writing quality needs automated checks. I built a test suite to flag phrases like \"AI is transforming everything\" or \"the future is here.\" These are red flags\u2014no value, no specificity.  \n\nWhen I ran the tests, the AI draft failed 80% of the time. It wasn\u2019t the model\u2019s fault\u2014it was the prompt.  \n\nTreat writing like code. Fail fast on generic phrasing. Build tests for clarity, depth, and relevance.  \n\n#AI #Writing #Engineering #CI #ContentQuality #RAG #LLM",
+      "humanized": "In a recent AI project, I noticed code churn spike from vague prompts like \"write a compelling article on AI trends.\" The results were generic, repetitive, and didn\u2019t really serve the people who needed the content.\n\nLike CI, writing quality needs checks. I built a test suite to catch phrases like \"AI is transforming everything\" or \"the future is here.\" These are red flags\u2014no real value, no real direction.\n\nWhen I ran the tests, the AI draft failed 80% of the time. It wasn\u2019t the model\u2019s fault\u2014it was the prompt.\n\nTreat writing like code. Fail fast on generic phrasing. Build tests for clarity, depth, and relevance.\n\n#AI #Writing #Engineering #CI #ContentQuality #RAG #LLM",
+      "critic": {
+        "scores": {
+          "originality": 75,
+          "human_quality": 70,
+          "engagement_probability": 65,
+          "evidence_quality": 80,
+          "ai_pattern_score": 78
+        },
+        "issues": [
+          "{'type': 'generic_language', 'description': 'The text uses common AI and content creation jargon without adding unique insights or specific examples.'}",
+          "{'type': 'unsupported_claims', 'description': \"The claim that 'AI draft failed 80% of the time' lacks specific data or context, making it hard to verify.\"}",
+          "{'type': 'overused_keywords', 'description': 'The use of hashtags like #AI and #Writing is common and may reduce perceived originality.'}",
+          "{'type': 'lack_of_personal_story', 'description': \"While the text includes a prompt issue, it doesn't provide a detailed personal story or specific example that would make the content more engaging.\"}"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 72,
+        "hook_score": 80,
+        "originality_score": 70,
+        "specificity_score": 65,
+        "discussion_score": 60,
+        "ai_pattern_score": 65,
+        "problems": [
+          "Lack of personal story or specific example to illustrate the point about code churn and prompts",
+          "Overuse of technical jargon without clear explanation for a broader audience",
+          "Generalization about AI models without concrete evidence or data",
+          "Limited emotional connection or relatability for non-technical readers",
+          "Potential AI writing patterns such as repetitive structure and generic phrasing"
+        ],
+        "improvements": [
+          "Add a personal anecdote or specific example of a prompt that failed and how it was fixed",
+          "Clarify the difference between model limitations and prompt quality with a simple analogy or example",
+          "Include data or metrics (e.g., percentage of failed prompts, specific examples of bad vs. good prompts)",
+          "Use more relatable language to connect with both technical and non-technical audiences",
+          "Avoid overused phrases like 'AI is transforming everything' and replace with more specific, actionable language",
+          "Consider ending with a genuine discussion question"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 100,
+        "first_person": true,
+        "first_person_count": 3,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "banned_matches": [],
+        "weak_hook_matches": [],
+        "fake_experience_matches": []
+      }
+    }
+  ]
+}
