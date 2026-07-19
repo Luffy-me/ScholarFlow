@@ -168,6 +168,9 @@ The predictor does **not** claim viral success. It identifies weak content early
 | Humanization | Rewrite drafts into authentic voice |
 | Quality critique | Score originality, human quality, evidence, AI patterns |
 | Engagement prediction | Pre-publish weakness detection with improvements |
+| Feedback learning | Capture real post performance for future optimization |
+| Source evidence | Optional claims with source, date, confidence |
+| Content modes | Founder / researcher / engineer / career journey styles |
 | Carousel design | Structured multi-slide document posts + export |
 | User memory | Ground writing in real background, projects, style |
 | Local model routing | Prefer Ollama; allow cloud fallback |
@@ -185,34 +188,81 @@ The predictor does **not** claim viral success. It identifies weak content early
 
 ---
 
+## Content Modes
+
+Generation can target a **content mode** (voice/structure preset), defined in `knowledge/content_modes.json`:
+
+| Mode | Intent |
+|---|---|
+| `founder` | Operator lessons, decisions, tradeoffs, building in public |
+| `researcher` | Evidence-led takes, careful claims, source-aware framing |
+| `engineer` | Technical clarity, systems thinking, concrete implementation lessons |
+| `career_journey` | Career narrative, transitions, skills growth, reflective milestones |
+
+Modes change tone and structure. They do **not** invent experiences. Personal claims still require `user_memory.json`.
+
+---
+
+## Source Evidence Layer
+
+Every generated insight may optionally attach evidence:
+
+- `source` — URL or citation label
+- `date` — publication or access date
+- `confidence` — 0–1 or labeled band (low / medium / high)
+- `extracted_claim` — the specific claim the source supports
+
+Stored under `research_sources/` (files) and/or Postgres `research_sources` / claim join records. Unsupported claims remain discouraged; evidence is preferred when available.
+
+---
+
+## Feedback Learning Loop
+
+After publishing (manual entry — no LinkedIn scraping required), users can record real performance in `feedback/engagement_feedback.json` (and DB projection):
+
+- impressions
+- likes
+- comments
+- reposts
+- saves
+- user rating
+
+Purpose: enable **future** optimization (which modes/hooks/topics perform) without claiming automated virality prediction from incomplete data.
+
+---
+
 ## Delivery Phases (Product View)
 
 ### Phase 1 — AI Core Engine (no dashboard-first)
 
 1. Ollama connection
 2. Model abstraction layer
-3. Writer Agent
+3. Writer Agent (content mode aware)
 4. Human Voice Agent
 5. Critic Agent
 6. Engagement Predictor Agent
 7. Save generated content
+8. Knowledge contracts: user memory, content modes, good/bad examples
+9. Source evidence schema + optional claim attachment
+10. Feedback learning schema (`engagement_feedback.json`) — write/read ready; learning models later
 
 ### Phase 2 — Simple Web Interface
 
-- Topic input
+- Topic input + content mode select
 - Generate button
-- Results view (draft + critic + engagement scores)
+- Results view (draft + critic + engagement scores + optional evidence)
 - Edit content
 - Save drafts
+- Manual engagement feedback entry
 
 ### Phase 3 — Advanced Features
 
 - Trend discovery
-- Source analysis
+- Source analysis (full research agent)
+- Feedback-driven optimization insights
 - Carousel generation
 - Browser extension
 - Analytics
-
 ---
 
 ## Success Criteria (Phase 1 — AI Core)
@@ -220,17 +270,20 @@ The predictor does **not** claim viral success. It identifies weak content early
 A developer / early user can:
 
 1. Confirm Ollama is reachable and a model is selected (CLI or API).
-2. Provide a topic (+ optional format) with `user_memory.json` loaded.
+2. Provide a topic (+ optional format + content mode) with `user_memory.json` loaded.
 3. Run Writer → Humanizer → Critic → Engagement Predictor.
 4. Receive structured critic scores and engagement prediction JSON.
-5. Persist generated content and scores to the database / local store.
+5. Optionally attach source evidence claims to insights.
+6. Persist generated content, scores, and (later) manual engagement feedback.
 
 Quality bar:
 
 - Drafts default to first person when user memory allows.
+- Content mode changes style without inventing biography.
 - Critic uses `good_posts.json` / `bad_posts.json` as references.
 - Engagement predictor returns problems + improvements (not vanity “viral” claims).
 - No invented personal achievements outside `user_memory.json`.
+- Feedback schema exists for real performance tracking (learning loop consumes it later).
 
 ---
 
@@ -249,19 +302,21 @@ Quality bar:
 
 Product behavior is constrained by versioned knowledge files:
 
-| File | Role |
+| File / path | Role |
 |---|---|
 | `knowledge/writing_rules.json` | Style, structure, and voice rules |
 | `knowledge/banned_patterns.json` | Phrases and patterns to reject |
 | `knowledge/user_style_profile.json` | Compact style overrides (optional companion to memory) |
 | `knowledge/user_memory.json` | **Canonical** real background, projects, experiences, tone |
+| `knowledge/content_modes.json` | Founder / researcher / engineer / career journey presets |
 | `knowledge/examples/good_posts.json` | Reference exemplars of strong posts |
 | `knowledge/examples/bad_posts.json` | Reference exemplars of weak / AI-like posts |
+| `research_sources/` | Optional evidence records (source, date, confidence, claim) |
+| `feedback/engagement_feedback.json` | Real post performance for learning loop |
 
 These files are part of the product contract, not optional prompts.
 
 **Critical rule:** Only experiences present in `user_memory.json` may be used as lived personal claims.
-
 ---
 
 ## Ethical Constraints

@@ -36,9 +36,13 @@ linkedin-content-engine/
 │   ├── banned_patterns.json
 │   ├── user_style_profile.json
 │   ├── user_memory.json          # canonical personal context
+│   ├── content_modes.json        # founder / researcher / engineer / career_journey
 │   └── examples/
 │       ├── good_posts.json
 │       └── bad_posts.json
+├── research_sources/             # source evidence layer (files)
+├── feedback/
+│   └── engagement_feedback.json  # real performance learning loop
 ├── database/
 ├── docs/
 └── README.md
@@ -54,6 +58,9 @@ linkedin-content-engine/
 | Agent isolation | Each agent has clear responsibility + input/output schemas |
 | No mega-prompts | Pipeline stages are independent modules |
 | No fake experiences | All personal claims gated by `user_memory.json` |
+| Evidence-aware | Insights may attach source/date/confidence/claim |
+| Mode-aware writing | Content modes shape voice without inventing biography |
+| Learn from reality | Manual engagement feedback enables future optimization |
 | AI core before UI | Phase 1 ships engine + API; Phase 2 adds simple web UI |
 | Production quality | Typed APIs, migrations, tests, explicit configuration |
 
@@ -192,13 +199,17 @@ Final Content (+ optional Improve / Export)
 **Rules**
 
 - First person when possible and allowed by `user_memory.json`
+- Apply selected **content mode** from `knowledge/content_modes.json`
 - Strong opening
 - Short paragraphs
 - Natural writing
 - Specific examples
 - No AI-like phrases
+- Prefer attaching optional source evidence when research claims are used
 
 **Formats:** short, long-form, carousel script, founder story, research summary, technical explanation
+
+**Modes:** `founder`, `researcher`, `engineer`, `career_journey`
 
 ### 5. Human Voice Agent (`agents/humanizer`)
 
@@ -293,12 +304,137 @@ Score semantics:
 
 ---
 
+## Content Modes (`knowledge/content_modes.json`)
+
+Content modes are voice/structure presets — not persona fabrications.
+
+```json
+{
+  "modes": {
+    "founder": {
+      "label": "Founder style",
+      "tone": "direct operator",
+      "emphasis": ["decisions", "tradeoffs", "lessons from building"],
+      "avoid": ["corporate fluff", "fake scale claims"]
+    },
+    "researcher": {
+      "label": "Researcher style",
+      "tone": "careful and evidence-led",
+      "emphasis": ["claims with sources", "uncertainty where needed"],
+      "avoid": ["overconfident generalizations"]
+    },
+    "engineer": {
+      "label": "Engineer style",
+      "tone": "precise and practical",
+      "emphasis": ["systems", "implementation lessons", "concrete examples"],
+      "avoid": ["buzzwords without substance"]
+    },
+    "career_journey": {
+      "label": "Career journey style",
+      "tone": "reflective and specific",
+      "emphasis": ["transitions", "skills growth", "real milestones"],
+      "avoid": ["motivational filler", "invented biography"]
+    }
+  }
+}
+```
+
+Writer and Humanizer load the selected mode. Modes never override the `user_memory.json` experience gate.
+
+---
+
+## Source Evidence Layer (`research_sources/`)
+
+Every generated insight may optionally store evidence records on disk and/or in Postgres.
+
+**Record shape**
+
+```json
+{
+  "id": "",
+  "source": "",
+  "date": "",
+  "confidence": 0.0,
+  "extracted_claim": "",
+  "post_id": null,
+  "pipeline_run_id": null,
+  "created_at": ""
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `source` | URL or citation label |
+| `date` | Publication or access date (ISO preferred) |
+| `confidence` | 0.0–1.0 confidence in the claim extraction / applicability |
+| `extracted_claim` | Specific claim the source supports |
+
+**Rules**
+
+- Evidence is optional but preferred for research-backed statements.
+- Do not invent sources or dates.
+- Researcher Agent (Phase 3) writes these; Phase 1 accepts manually supplied evidence in generate requests and persists them.
+
+File layout example:
+
+```text
+research_sources/
+  README.md
+  .gitkeep
+  # optional per-run or per-source JSON files once implemented
+```
+
+---
+
+## Feedback Learning Loop (`feedback/engagement_feedback.json`)
+
+Track **real** content performance after publishing (manual entry; no LinkedIn scrape required).
+
+**Record shape**
+
+```json
+{
+  "entries": [
+    {
+      "post_id": "",
+      "recorded_at": "",
+      "impressions": 0,
+      "likes": 0,
+      "comments": 0,
+      "reposts": 0,
+      "saves": 0,
+      "user_rating": 0,
+      "notes": "",
+      "content_mode": "founder",
+      "topic": ""
+    }
+  ]
+}
+```
+
+| Field | Purpose |
+|---|---|
+| `impressions` | Reach |
+| `likes` | Positive reactions |
+| `comments` | Discussion signal |
+| `reposts` | Amplification |
+| `saves` | Bookmark / revisit signal |
+| `user_rating` | Owner quality rating (e.g. 1–5) |
+
+**Purpose:** allow future optimization (which modes, hooks, and topics correlate with stronger outcomes).
+
+**Phase 1:** schema + API write/read + persist to file/DB.  
+**Phase 3:** analytics and optional predictor calibration from aggregated feedback.  
+**Non-goal:** claiming automated viral forecasting from sparse early data.
+
+---
+
 ## Phase 1 Pipeline (AI Core Engine)
 
 Phase 1 does **not** build the dashboard first. It ships the core engine behind the API (CLI-friendly).
 
 ```text
-Topic + format + user_memory.json
+Topic + format + content_mode + user_memory.json (+ optional evidence)
         │
         ▼
    Writer Agent          ──► draft_v1
@@ -314,6 +450,9 @@ Topic + format + user_memory.json
         │
         ▼
  Persist GeneratedContent + Feedback scores
+        │
+        └── optional: attach research_sources evidence records
+        └── later: record engagement_feedback after publish
 ```
 
 Trend / Research / Strategist / Designer remain **contract stubs** until Phase 3 (or earlier if pulled forward deliberately).
@@ -436,6 +575,7 @@ The **Engagement Predictor** may also use them as calibration hints for hook/spe
 |---|---|---|
 | `GET` | `/health` | API health |
 | `GET` | `/ai/status` | Ollama reachability + available models |
+| `GET` | `/modes` | List content modes from `content_modes.json` |
 | `POST` | `/generate` | Writer → humanizer → critic → engagement predictor |
 | `POST` | `/humanize` | Re-run humanizer |
 | `POST` | `/critique` | Re-run critic |
@@ -446,6 +586,10 @@ The **Engagement Predictor** may also use them as calibration hints for hook/spe
 | `PATCH` | `/posts/{id}` | Update draft / status |
 | `GET` | `/memory` | Read user memory (file/DB projection) |
 | `PUT` | `/memory` | Update user memory |
+| `POST` | `/posts/{id}/evidence` | Attach optional source evidence claims |
+| `GET` | `/posts/{id}/evidence` | List evidence for a post |
+| `POST` | `/posts/{id}/engagement-feedback` | Record real performance metrics |
+| `GET` | `/posts/{id}/engagement-feedback` | Read feedback entries |
 
 Exact paths may be versioned under `/api/v1`.
 
@@ -478,8 +622,10 @@ embed(texts) → vectors   # later phases
 
 | Store | Use |
 |---|---|
-| PostgreSQL | Users, posts, trends, feedback, carousels, profiles, engagement scores |
-| Filesystem knowledge | `user_memory.json`, rules, good/bad examples (source of truth for local-first) |
+| PostgreSQL | Users, posts, trends, feedback, carousels, profiles, engagement scores, evidence |
+| Filesystem knowledge | `user_memory.json`, rules, modes, good/bad examples |
+| `research_sources/` | Optional evidence JSON records |
+| `feedback/engagement_feedback.json` | Real performance learning data |
 | Qdrant | Semantic memory of past posts, research chunks (Phase 3+) |
 | Redis | Generation job status, rate limits, model list cache |
 | Local filesystem | Carousel exports, uploaded references |
@@ -562,6 +708,9 @@ When coding is approved:
 3. **Ollama-first provider** — local default; cloud optional later.
 4. **AI core before UI** — Phase 1 engine/API; Phase 2 simple web; Phase 3 advanced.
 5. **`user_memory.json` as personal-claim source of truth** — never invent experiences.
-6. **Good/bad post dataset** — critic calibration and regression tests.
-7. **Engagement predictor ≠ virality oracle** — pre-publish weakness detection only.
-8. **PostgreSQL for persisted generations** — filesystem knowledge for local rules/memory.
+6. **Content modes** — founder/researcher/engineer/career_journey presets.
+7. **Source evidence layer** — optional source/date/confidence/claim per insight.
+8. **Feedback learning loop** — manual real metrics for future optimization.
+9. **Good/bad post dataset** — critic calibration and regression tests.
+10. **Engagement predictor ≠ virality oracle** — pre-publish weakness detection only.
+11. **PostgreSQL for persisted generations** — filesystem knowledge for local rules/memory.

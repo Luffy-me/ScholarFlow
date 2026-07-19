@@ -19,11 +19,13 @@ User 1───* Post
 User 1───1 WritingProfile
 User 1───* GeneratedContent
 User 1───* Feedback
+User 1───* EngagementFeedback
 User 1───* KnowledgeMemory
 User 1───* Carousel
 
 Post 1───* GeneratedContent
 Post 1───0..1 Carousel
+Post 1───* EngagementFeedback
 Post *───* ResearchSource   (via post_sources)
 Trend 1───* Post            (optional link)
 
@@ -96,6 +98,7 @@ User-facing content records (canonical saved LinkedIn content).
 | `body` | `text` NOT NULL | latest accepted body |
 | `hook` | `text` | |
 | `discussion_question` | `text` | |
+| `content_mode` | `text` | founder \| researcher \| engineer \| career_journey |
 | `trend_id` | `uuid` FK → trends NULL | |
 | `strategy` | `jsonb` | strategist output snapshot |
 | `critic_scores` | `jsonb` | latest critic payload |
@@ -137,17 +140,20 @@ Immutable-ish generation artifacts (pipeline versions).
 
 ### `research_sources`
 
-Trusted sources attached to research / posts (Phase 3 primary use).
+Trusted sources and optional evidence claims attached to research / posts.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | `uuid` PK | |
 | `user_id` | `uuid` FK → users NULL | null = global/system source |
-| `url` | `text` | |
-| `title` | `text` NOT NULL | |
-| `source_type` | `text` NOT NULL | paper \| report \| article \| data \| other |
+| `source` | `text` NOT NULL | URL or citation label (alias of conceptual `source`) |
+| `url` | `text` | Optional normalized URL when `source` is a label |
+| `title` | `text` | |
+| `source_type` | `text` NOT NULL DEFAULT `'other'` | paper \| report \| article \| data \| other |
 | `publisher` | `text` | |
-| `published_at` | `date` | |
+| `published_or_accessed_at` | `date` | maps to evidence `date` |
+| `confidence` | `numeric(4,3)` | 0.000–1.000 |
+| `extracted_claim` | `text` | specific claim supported by the source |
 | `summary` | `text` | |
 | `raw_excerpt` | `text` | |
 | `metadata` | `jsonb` NOT NULL DEFAULT `{}` | |
@@ -161,7 +167,11 @@ Trusted sources attached to research / posts (Phase 3 primary use).
 | `post_id` | `uuid` FK → posts | |
 | `research_source_id` | `uuid` FK → research_sources | |
 | `relevance_note` | `text` | |
+| `extracted_claim` | `text` | claim as used in this post (may mirror source) |
+| `confidence` | `numeric(4,3)` | per-post applicability override |
 | PK | `(post_id, research_source_id)` | |
+
+Filesystem mirror: `research_sources/` JSON files for local-first workflows.
 
 ---
 
@@ -201,6 +211,34 @@ Structured carousel documents linked to a post (Phase 3).
 | `export_paths` | `jsonb` NOT NULL DEFAULT `{}` | `{pdf, png[]}` local paths |
 | `created_at` | `timestamptz` NOT NULL | |
 | `updated_at` | `timestamptz` NOT NULL | |
+
+---
+
+### `engagement_feedback`
+
+Real post performance for the feedback learning loop (manual entry; no LinkedIn scrape).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `user_id` | `uuid` FK → users NOT NULL | |
+| `post_id` | `uuid` FK → posts NOT NULL | |
+| `recorded_at` | `timestamptz` NOT NULL | when metrics were captured |
+| `impressions` | `int` NOT NULL DEFAULT 0 | |
+| `likes` | `int` NOT NULL DEFAULT 0 | |
+| `comments` | `int` NOT NULL DEFAULT 0 | |
+| `reposts` | `int` NOT NULL DEFAULT 0 | |
+| `saves` | `int` NOT NULL DEFAULT 0 | |
+| `user_rating` | `int` CHECK 1–5 NULL | owner quality rating |
+| `content_mode` | `text` | snapshot of mode used |
+| `topic` | `text` | snapshot for analytics |
+| `notes` | `text` | |
+| `raw_payload` | `jsonb` NOT NULL DEFAULT `{}` | extra fields |
+| `created_at` | `timestamptz` NOT NULL | |
+
+**Indexes:** `(post_id, recorded_at DESC)`, `(user_id, recorded_at DESC)`, `(content_mode, recorded_at DESC)`.
+
+Filesystem mirror: `feedback/engagement_feedback.json`.
 
 ---
 
@@ -268,8 +306,11 @@ Long-lived memories for style/research retrieval (Qdrant pointer + metadata in P
 | `knowledge/writing_rules.json` | Voice and structure rules |
 | `knowledge/banned_patterns.json` | Rejected phrases/patterns |
 | `knowledge/user_style_profile.json` | Optional compact style overrides |
+| `knowledge/content_modes.json` | Founder / researcher / engineer / career_journey presets |
 | `knowledge/examples/good_posts.json` | Critic / predictor positive references |
 | `knowledge/examples/bad_posts.json` | Critic / predictor negative references |
+| `research_sources/` | Optional evidence records (source, date, confidence, claim) |
+| `feedback/engagement_feedback.json` | Real performance metrics for learning |
 
 Phase 1 may persist generations to Postgres **or** a lightweight local store, but schemas above are the target. Knowledge JSON files are required regardless.
 
@@ -282,6 +323,7 @@ Stored as `text` with app validation:
 | Field | Allowed values |
 |---|---|
 | `posts.format` / `generated_content.format` | `short`, `long_form`, `carousel_script`, `founder_story`, `research_summary`, `technical_explanation` |
+| `posts.content_mode` / `engagement_feedback.content_mode` | `founder`, `researcher`, `engineer`, `career_journey` |
 | `posts.status` | `draft`, `reviewed`, `ready`, `archived` |
 | `generated_content.stage` | `writer`, `humanizer`, `critic`, `engagement_predictor`, `final` |
 | `trends.trend_level` | `emerging`, `rising`, `peaking`, `saturated` |
@@ -298,24 +340,25 @@ Stored as `text` with app validation:
 
 - `users` (or single local default user)
 - `writing_profiles` (synced from `user_memory.json`)
-- `posts`
+- `posts` (including `content_mode`)
 - `generated_content` (including `engagement_predictor` stage)
 - `feedback` (critic + engagement predictor)
+- `research_sources` + `post_sources` (optional evidence attach)
+- `engagement_feedback` (manual metrics write/read; learning later)
 
 ### Phase 1 — stub / migrate empty OK
 
-- `research_sources`, `post_sources`
 - `trends`
 - `carousels`
 - `knowledge_memories`
 
 ### Phase 2 — Web Interface
 
-Same Phase 1 tables; UI reads/writes posts and scores. No new required entities.
+Same Phase 1 tables; UI reads/writes posts, modes, evidence, and engagement feedback. No new required entities.
 
 ### Phase 3 — Advanced
 
-Activate `trends`, `research_sources`, `carousels`, `knowledge_memories` + Qdrant.
+Activate `trends`, `carousels`, `knowledge_memories` + Qdrant; consume `engagement_feedback` for optimization insights.
 
 ---
 
@@ -346,6 +389,8 @@ Postgres remains canonical for structured state; Qdrant is a retrieval index.
 
 1. Personal lived experiences may only come from `knowledge/user_memory.json` (and its DB projection).
 2. Critic and engagement predictor payloads persisted on `feedback` / `posts` must match ARCHITECTURE schemas.
-3. Soft-delete is out of scope early; use `posts.status = archived`.
-4. Do not store cloud provider API keys in the database.
-5. Do not store invented LinkedIn credentials or scrape artifacts without an approved approach.
+3. Evidence records must not invent sources, dates, or claims.
+4. Engagement feedback is user-entered (or future approved integrations) — never scraped LinkedIn without approval.
+5. Soft-delete is out of scope early; use `posts.status = archived`.
+6. Do not store cloud provider API keys in the database.
+7. Do not store invented LinkedIn credentials or scrape artifacts without an approved approach.
