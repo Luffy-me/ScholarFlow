@@ -19,6 +19,22 @@ class Settings(BaseSettings):
         default="qwen3:8b",
         validation_alias=AliasChoices("OLLAMA_MODEL", "DEFAULT_MODEL", "ollama_model", "default_model"),
     )
+    writer_model: str = Field(
+        default="qwen3:8b",
+        validation_alias=AliasChoices("WRITER_MODEL", "writer_model"),
+    )
+    critic_model: str = Field(
+        default="qwen3:4b",
+        validation_alias=AliasChoices("CRITIC_MODEL", "critic_model"),
+    )
+    predictor_model: str = Field(
+        default="qwen3:4b",
+        validation_alias=AliasChoices("PREDICTOR_MODEL", "predictor_model"),
+    )
+    humanizer_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("HUMANIZER_MODEL", "humanizer_model"),
+    )
     ollama_think: bool = Field(
         default=False,
         validation_alias=AliasChoices("OLLAMA_THINK", "ollama_think"),
@@ -37,6 +53,17 @@ class Settings(BaseSettings):
     def default_model(self) -> str:
         """Alias used across the API and providers."""
         return self.ollama_model
+
+    def model_for_stage(self, stage: str) -> str:
+        """Resolve per-stage model, falling back to OLLAMA_MODEL."""
+        mapping = {
+            "writer": self.writer_model or self.ollama_model,
+            "humanizer": self.humanizer_model or self.writer_model or self.ollama_model,
+            "critic": self.critic_model or self.ollama_model,
+            "engagement_predictor": self.predictor_model or self.ollama_model,
+            "predictor": self.predictor_model or self.ollama_model,
+        }
+        return mapping.get(stage, self.ollama_model)
 
 
 settings = Settings()

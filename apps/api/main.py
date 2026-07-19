@@ -30,8 +30,6 @@ from database.models import (
     WritingProfile,
 )
 from database.session import get_session, init_db
-from models.fake import FakeProvider
-from models.ollama import OllamaProvider
 from shared.knowledge import load_content_modes, load_user_memory, repo_path
 
 app = FastAPI(
@@ -42,14 +40,21 @@ app = FastAPI(
 
 
 def get_provider():
-    if settings.use_fake_provider:
-        return FakeProvider()
-    return OllamaProvider(
-        base_url=settings.ollama_base_url,
-        default_model=settings.ollama_model,
-        think=settings.ollama_think,
-        num_ctx=settings.ollama_num_ctx,
-    )
+    from apps.api.providers import build_base_provider
+
+    return build_base_provider(fake=settings.use_fake_provider)
+
+
+@app.get("/api/v1/ai/models")
+def ai_models() -> dict[str, str]:
+    return {
+        "ollama_model": settings.ollama_model,
+        "writer_model": settings.model_for_stage("writer"),
+        "humanizer_model": settings.model_for_stage("humanizer"),
+        "critic_model": settings.model_for_stage("critic"),
+        "predictor_model": settings.model_for_stage("predictor"),
+    }
+
 
 
 def _ensure_local_user(session: Session) -> User:
@@ -135,19 +140,23 @@ async def generate(payload: GenerateRequest, session: Session = Depends(get_sess
         content_mode=payload.content_mode,
         format=payload.format,
         audience=payload.audience,
+        fake=settings.use_fake_provider,
     )
 
     if payload.save:
         user = _ensure_local_user(session)
+        # Hard safety gate: unsupported personal claims cannot be approved.
+        status = "unsafe" if not result.get("approval_allowed", True) else "draft"
         post = Post(
             user_id=user.id,
             topic=payload.topic,
             format=payload.format,
             content_mode=payload.content_mode,
-            status="draft",
+            status=status,
             body=result["final_text"],
             critic_scores=result["critic"]["scores"],
             engagement_prediction=result["engagement_prediction"],
+            tags=["grounding:unsafe"] if status == "unsafe" else [],
         )
         session.add(post)
         session.flush()
@@ -234,12 +243,28 @@ def get_post(post_id: uuid.UUID, session: Session = Depends(get_session)) -> dic
 def patch_post(
     post_id: uuid.UUID, payload: PostUpdate, session: Session = Depends(get_session)
 ) -> dict[str, Any]:
+    from agents.grounding import check_claims
+    from shared.knowledge import load_user_memory
+
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if payload.body is not None:
         post.body = payload.body
     if payload.status is not None:
+        # Hard safety gate: cannot approve content with unsupported personal claims.
+        if payload.status in {"ready", "reviewed"}:
+            body = payload.body if payload.body is not None else post.body
+            grounding = check_claims(body or "", load_user_memory())
+            if not grounding.safe:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "error": "approval_blocked",
+                        "message": "Unsupported personal claims prevent final approval",
+                        "rejected_claims": [c.model_dump() for c in grounding.rejected_claims],
+                    },
+                )
         post.status = payload.status
     if payload.title is not None:
         post.title = payload.title

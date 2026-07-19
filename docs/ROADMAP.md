@@ -150,6 +150,25 @@ See [VALIDATION_PHASE1_5.md](./VALIDATION_PHASE1_5.md).
 
 ---
 
+## Phase 1.6 — Truth Layer v2 (anti-hallucination)
+
+**Status:** implemented
+
+### Scope
+
+1. `agents/grounding/claim_checker.py`
+2. Pipeline: Writer → Claim Checker → Humanizer → Critic → Engagement Predictor
+3. Hard safety gate (`safe` / `approval_allowed`)
+4. Humanizer cannot invent experiences/metrics/clients/achievements
+5. Per-stage models: `WRITER_MODEL`, `CRITIC_MODEL`, `PREDICTOR_MODEL`
+6. Grounding tests + before/after validation report
+
+See [TRUTH_LAYER_V2.md](./TRUTH_LAYER_V2.md).
+
+---
+
+## Phase 2 — Simple Web Interface
+
 ### Scope
 
 - Topic input

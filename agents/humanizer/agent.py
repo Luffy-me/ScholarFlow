@@ -1,10 +1,16 @@
-"""Human Voice Agent — rewrite toward authentic first-person writing."""
+"""Human Voice Agent — rewrite toward authentic first-person writing.
+
+Truth Layer v2 constraint:
+Humanizer may only improve wording, structure, and clarity.
+It must NEVER invent experiences, metrics, clients, or achievements.
+"""
 
 from __future__ import annotations
 
 from agents.base import Agent, AgentInput, AgentOutput
+from agents.grounding import check_claims
 from models.base import ChatMessage
-from shared.knowledge import load_user_memory
+from shared.knowledge import allowed_experience_texts, load_user_memory
 from shared.quality import scan_text
 
 
@@ -22,28 +28,45 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
     async def run(self, payload: HumanizerInput) -> HumanizerOutput:
         memory = payload.user_memory or load_user_memory()
         source = payload.text.strip()
+        allowed = allowed_experience_texts(memory)
         system = (
-            "Rewrite the LinkedIn draft so it sounds like a real person.\n"
-            "Prefer first person. Remove corporate language and fake enthusiasm.\n"
-            "Keep meaning. Do not invent personal experiences.\n"
-            "Use short paragraphs and a clear perspective."
+            "You are a humanizing editor for LinkedIn drafts.\n"
+            "You may ONLY:\n"
+            "- improve wording\n"
+            "- improve structure\n"
+            "- improve clarity\n"
+            "You must NOT invent or add:\n"
+            "- experiences\n"
+            "- metrics or percentages\n"
+            "- clients or customers\n"
+            "- achievements\n"
+            "- quotes\n"
+            "- specific time references not already in the draft\n"
+            "Prefer first person when already present.\n"
+            "Remove corporate language and fake enthusiasm.\n"
+            f"Allowed experiences (do not expand beyond these): {allowed}\n"
+            "If the draft is sparse after grounding, keep it sparse. Do not fill gaps with fiction."
         )
         result = await self.provider.generate(
             [
                 ChatMessage(role="system", content=system),
                 ChatMessage(role="user", content=source or "No draft provided."),
             ],
-            temperature=0.4,
+            temperature=0.3,
         )
         rewritten = result.text.strip() or source
         rewritten = rewritten.replace("```markdown", "").replace("```", "").strip()
-        scan = scan_text(rewritten, memory)
 
-        # Keep model output for evaluation unless it is empty or invents experiences.
-        if (not rewritten) or scan.has_fake_experience:
-            rewritten = self._deterministic_humanize(source or payload.topic, memory)
-            scan = scan_text(rewritten, memory)
-        elif scan.has_generic_ai and not scan.has_strong_first_person:
+        # Hard guard: if humanizer invents claims, revert to grounded source.
+        rewritten_check = check_claims(rewritten, memory)
+        source_check = check_claims(source, memory)
+        if (not rewritten_check.safe) and source_check.safe:
+            rewritten = source
+        elif not rewritten_check.safe:
+            rewritten = self._deterministic_humanize(source, memory)
+
+        scan = scan_text(rewritten, memory)
+        if (not rewritten) or (scan.has_generic_ai and not scan.has_strong_first_person):
             rewritten = self._deterministic_humanize(source or payload.topic, memory)
             scan = scan_text(rewritten, memory)
 
@@ -55,20 +78,26 @@ class HumanizerAgent(Agent[HumanizerInput, HumanizerOutput]):
                     "generic_ai": scan.has_generic_ai,
                     "first_person": scan.has_strong_first_person,
                     "first_person_count": scan.first_person_count,
-                }
+                },
+                "grounding_safe": check_claims(rewritten, memory).safe,
             },
             meta={"provider": result.provider, "model": result.model},
         )
 
     def _deterministic_humanize(self, text: str, memory: dict) -> str:
-        # Never echo the original opening — it may contain banned generic phrases.
+        # Style-only rewrite: never introduce new facts/metrics/clients.
+        base = (text or "").strip()
+        scan = scan_text(base, memory)
+        if base and not scan.has_generic_ai and scan.first_person_count >= 1:
+            return base
+
         projects = memory.get("projects") or []
-        project = projects[0] if projects else "my recent work"
+        project = projects[0] if projects else "recent work"
+        # If we only have toxic generic source text, replace with a grounded scaffold.
         return (
-            "I rewrote this draft because the first version sounded like a template.\n\n"
-            f"What I actually care about from {project} is the messy part: the tradeoffs and the corrections.\n\n"
-            "So here's the clearer version — specific, first person, and without corporate filler.\n\n"
-            "What would you cut from your last post?"
+            f"I keep coming back to lessons from {project}.\n\n"
+            "I want the draft to stay specific, first person, and free of invented metrics.\n\n"
+            "What would you cut from your last draft?"
         )
 
 

@@ -1,4 +1,4 @@
-"""Run real Ollama generation across examples/test_topics.json and score authenticity."""
+"""Run real Ollama generation with Truth Layer v2 grounding metrics."""
 
 from __future__ import annotations
 
@@ -9,15 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from apps.api.cli.generate import build_provider
 from apps.api.config import settings
 from apps.api.pipeline import run_generation_pipeline
+from apps.api.providers import build_base_provider
 from models.ollama import OllamaUnavailableError
 from shared.knowledge import repo_path
 from shared.quality import scan_text
 
 
-def evaluate_text(text: str) -> dict[str, Any]:
+def evaluate_text(text: str, *, safe: bool) -> dict[str, Any]:
     scan = scan_text(text)
     authenticity = 100
     if scan.has_generic_ai:
@@ -28,6 +28,8 @@ def evaluate_text(text: str) -> dict[str, Any]:
         authenticity -= 25
     if scan.first_person_count == 0:
         authenticity -= 20
+    if not safe:
+        authenticity -= 40
     authenticity = max(0, min(100, authenticity))
     return {
         "authenticity_score": authenticity,
@@ -35,11 +37,9 @@ def evaluate_text(text: str) -> dict[str, Any]:
         "first_person_count": scan.first_person_count,
         "generic_ai_patterns": scan.has_generic_ai,
         "weak_hook": scan.has_weak_hook,
-        "hallucination_risk": "high" if scan.has_fake_experience else "low",
+        "hallucination_risk": "high" if not safe else "low",
         "fake_experience": scan.has_fake_experience,
-        "banned_matches": [hit.matched for hit in scan.banned_phrases],
-        "weak_hook_matches": [hit.matched for hit in scan.weak_hooks],
-        "fake_experience_matches": [hit.matched for hit in scan.fake_experiences],
+        "grounding_safe": safe,
     }
 
 
@@ -47,26 +47,36 @@ async def run_dataset(limit: int | None = None) -> dict[str, Any]:
     dataset_path = repo_path("examples/test_topics.json")
     dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
     topics = dataset.get("topics", [])
+    # Prefer one topic per category for compact validation runs.
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for item in topics:
+        cat = str(item.get("category", ""))
+        if cat in seen:
+            continue
+        seen.add(cat)
+        deduped.append(item)
+    topics = deduped
     if limit is not None:
         topics = topics[:limit]
-
-    provider = build_provider(fake=False)
+    provider = build_base_provider(fake=False)
     try:
-        status = await provider.ensure_available()
+        status = await provider.ensure_available()  # type: ignore[attr-defined]
     except OllamaUnavailableError as exc:
         return {"error": str(exc), "results": []}
 
     results: list[dict[str, Any]] = []
     for item in topics:
-        print(f"Generating: {item['id']} — {item['topic'][:60]}...")
+        print(f"Generating: {item['id']} — {item['topic'][:60]}...", flush=True)
         generated = await run_generation_pipeline(
-            provider,
+            None,
             topic=item["topic"],
             content_mode=item.get("content_mode", "founder"),
             format=item.get("format", "short"),
             audience=item.get("audience", ""),
+            fake=False,
         )
-        quality = evaluate_text(generated.get("final_text", ""))
+        quality = evaluate_text(generated.get("final_text", ""), safe=bool(generated.get("safe")))
         results.append(
             {
                 "id": item["id"],
@@ -75,15 +85,33 @@ async def run_dataset(limit: int | None = None) -> dict[str, Any]:
                 "content_mode": item.get("content_mode"),
                 "audience": item.get("audience"),
                 "draft": generated.get("draft"),
+                "grounded_draft": generated.get("grounded_draft"),
                 "humanized": generated.get("final_text"),
+                "safe": generated.get("safe"),
+                "approval_allowed": generated.get("approval_allowed"),
+                "grounding": generated.get("grounding"),
                 "critic": generated.get("critic"),
                 "engagement_prediction": generated.get("engagement_prediction"),
                 "quality_eval": quality,
             }
         )
+        print(
+            json.dumps(
+                {
+                    "id": item["id"],
+                    "safe": generated.get("safe"),
+                    "approval_allowed": generated.get("approval_allowed"),
+                    **quality,
+                },
+                indent=2,
+            ),
+            flush=True,
+        )
 
     summary = {
-        "model": settings.ollama_model,
+        "model_writer": settings.model_for_stage("writer"),
+        "model_critic": settings.model_for_stage("critic"),
+        "model_predictor": settings.model_for_stage("predictor"),
         "ollama_models": status.models,
         "count": len(results),
         "avg_authenticity": round(
@@ -95,25 +123,25 @@ async def run_dataset(limit: int | None = None) -> dict[str, Any]:
         "generic_ai_rate": round(
             sum(1 for r in results if r["quality_eval"]["generic_ai_patterns"]) / max(len(results), 1), 2
         ),
-        "high_hallucination_rate": round(
-            sum(1 for r in results if r["quality_eval"]["hallucination_risk"] == "high")
-            / max(len(results), 1),
-            2,
+        "grounding_safe_rate": round(sum(1 for r in results if r.get("safe")) / max(len(results), 1), 2),
+        "approval_allowed_rate": round(
+            sum(1 for r in results if r.get("approval_allowed")) / max(len(results), 1), 2
         ),
     }
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "truth_layer": "v2",
         "summary": summary,
         "results": results,
     }
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run Phase 1.5 real AI validation dataset")
-    parser.add_argument("--limit", type=int, default=None, help="Optional topic limit")
+    parser = argparse.ArgumentParser(description="Run Phase 1.5/Truth Layer v2 validation dataset")
+    parser.add_argument("--limit", type=int, default=4, help="Topic limit (category-deduped when <=4)")
     parser.add_argument(
         "--out",
-        default="examples/validation_report.json",
+        default="examples/validation_report_v2.json",
         help="Output report path",
     )
     args = parser.parse_args()

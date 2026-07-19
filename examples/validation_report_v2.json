@@ -1,0 +1,328 @@
+{
+  "generated_at": "2026-07-19T19:25:17.006047+00:00",
+  "truth_layer": "v2",
+  "summary": {
+    "model_writer": "qwen3:8b",
+    "model_critic": "qwen3:4b",
+    "model_predictor": "qwen3:4b",
+    "ollama_models": [
+      "qwen3:4b",
+      "tinyllama:latest",
+      "qwen2.5:3b",
+      "qwen3:8b"
+    ],
+    "count": 4,
+    "avg_authenticity": 81.2,
+    "first_person_rate": 0.25,
+    "generic_ai_rate": 0.0,
+    "grounding_safe_rate": 1.0,
+    "approval_allowed_rate": 1.0
+  },
+  "results": [
+    {
+      "id": "ai_local_eval",
+      "category": "AI",
+      "topic": "Why local AI evaluation loops matter more than model size",
+      "content_mode": "engineer",
+      "audience": "ML engineers and technical founders",
+      "draft": "I worked on AI projects recently, and one lesson stuck.\n\nWhile exploring Why local AI evaluation loops matter more than model size, I kept coming back to practical tradeoffs \u2014 not slogans.\n\nFrom that work (AI projects), the useful insight was simple: specific systems beat generic advice.\n\nWhat are you testing on Why local AI evaluation loops matter more than model size right now?",
+      "grounded_draft": "I worked on AI projects recently, and one lesson stuck. From that work (AI projects), the useful insight was simple: specific systems beat generic advice. What are you testing on Why local AI evaluation loops matter more than model size right now?",
+      "humanized": "I worked on AI projects recently, and one lesson stuck. From that work, the useful insight was simple: specific systems beat generic advice. What are you testing? Why local AI evaluation loops matter more than model size right now?",
+      "safe": true,
+      "approval_allowed": true,
+      "grounding": {
+        "approved_claims": [
+          {
+            "text": "I worked on AI projects recently, and one lesson stuck.",
+            "claim_type": "personal_experience",
+            "reason": "Grounded in user_memory.json"
+          }
+        ],
+        "rejected_claims": [
+          {
+            "text": "While exploring Why local AI evaluation loops matter more than model size, I kept coming back to practical tradeoffs \u2014 not slogans.",
+            "claim_type": "project",
+            "reason": "Project mention is not present in user_memory.json"
+          }
+        ],
+        "warnings": []
+      },
+      "critic": {
+        "scores": {
+          "originality": 1,
+          "human_quality": 1,
+          "engagement_probability": 0,
+          "evidence_quality": 0,
+          "ai_pattern_score": 72
+        },
+        "issues": [
+          "The phrase 'the useful insight was simple' is overly simplistic and lacks depth",
+          "The question 'What are you testing?' is vague and doesn't connect to the previous statement",
+          "The phrase 'Why local AI evaluation loops matter more than model size right now?' is a run-on sentence that mixes two ideas without clear separation",
+          "The sentence structure is repetitive and lacks the natural flow of human writing",
+          "The text doesn't provide concrete examples or specific context to support the claim",
+          "The phrase 'From that work' is too vague and doesn't specify what work",
+          "The sentence structure feels forced and lacks the natural rhythm of human writing"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 1,
+        "hook_score": 1,
+        "originality_score": 0,
+        "specificity_score": 1,
+        "discussion_score": 60,
+        "ai_pattern_score": 1,
+        "problems": [
+          "The hook is a bit vague: 'What are you testing? Why local AI evaluation loops matter more than model size right now?' is a question that's not clearly framed as a hook but rather as a prompt for the reader.",
+          "The phrase 'the useful insight was simple' is overly simplistic and lacks depth, making the claim feel less substantial.",
+          "The sentence structure is a bit jumbled: 'What are you testing? Why local AI evaluation loops matter more than model size right now?' is a question that's not clearly connected to the previous statement.",
+          "The phrase 'local AI evaluation loops' is technical jargon that might not resonate with a general LinkedIn audience, potentially alienating readers who aren't familiar with AI technical terms.",
+          "The post doesn't provide concrete examples or evidence to back up the claim that specific systems beat generic advice, which weakens the credibility of the insight.",
+          "The post lacks a clear call to action or engagement prompt to encourage comments and shares, which is crucial for LinkedIn engagement.",
+          "The phrase 'right now' is vague and doesn't specify what 'right now' means in the context of AI development, making the claim less impactful.",
+          "The post doesn't clearly define what 'specific systems' means in this context, which could lead to confusion or misinterpretation."
+        ],
+        "improvements": [
+          "Rephrase the hook to be more direct and engaging, e.g., 'Why your AI projects fail (and how to fix it) without bigger models'",
+          "Provide concrete examples of specific systems that have outperformed generic advice in your projects",
+          "Clarify the term 'local AI evaluation loops' with a simple analogy or example",
+          "Add a brief anecdote or story to illustrate the lesson learned",
+          "Include a clear call to action, such as 'What's your biggest struggle with AI testing? Share below!'",
+          "Specify what 'right now' means in the context of AI development (e.g., 'in the current phase of AI development where model size is less critical than local evaluation loops')",
+          "Avoid overly technical jargon and use simpler language to ensure broader audience engagement"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 75,
+        "first_person": false,
+        "first_person_count": 1,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "grounding_safe": true
+      }
+    },
+    {
+      "id": "startup_mvp_focus",
+      "category": "startups",
+      "topic": "The expensive mistake of building features nobody asked for",
+      "content_mode": "founder",
+      "audience": "early-stage founders",
+      "draft": "Last week, I spent three weeks building a \"smart content suggestion\" feature for our RAG chatbot \u2014 all based on a vague idea that users might want \"more context.\"  \n\nTurns out, no one asked for it.  \n\nWe spent time, code, and compute on something that didn\u2019t solve a real problem.  \n\nThe lesson? Don\u2019t assume. Ask. Build only what\u2019s needed.  \n\nEarly-stage founders: focus on what users *say* they need, not what you *think* they want.",
+      "grounded_draft": "Turns out, no one asked for it. We spent time, code, and compute on something that didn\u2019t solve a real problem. The lesson? Don\u2019t assume. Ask. Build only what\u2019s needed. Early-stage founders: focus on what users *say* they need, not what you *think* they want.",
+      "humanized": "We spent time, code, and compute on something that didn\u2019t solve a real problem. Turns out, no one asked for it. The lesson? Don\u2019t assume. Ask. Build only what\u2019s needed. Early-stage founders: focus on what users *say* they need, not what you *think* they want.",
+      "safe": true,
+      "approval_allowed": true,
+      "grounding": {
+        "approved_claims": [
+          {
+            "text": "We spent time, code, and compute on something that didn\u2019t solve a real problem.",
+            "claim_type": "personal_experience",
+            "reason": "No unsupported hard-risk markers"
+          }
+        ],
+        "rejected_claims": [
+          {
+            "text": "Last week, I spent three weeks building a \"smart content suggestion\" feature for our RAG chatbot \u2014 all based on a vague idea that users might want \"more context.\"",
+            "claim_type": "time_reference",
+            "reason": "Specific time reference is not grounded in user_memory.json"
+          }
+        ],
+        "warnings": []
+      },
+      "critic": {
+        "scores": {
+          "originality": 1,
+          "human_quality": 1,
+          "engagement_probability": 1,
+          "evidence_quality": 1,
+          "ai_pattern_score": 65
+        },
+        "issues": [
+          "slightly generic phrasing for 'no one asked for it'",
+          "could use more concrete examples of what was built",
+          "lacks specific metrics or user feedback details"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 8,
+        "hook_score": 8,
+        "originality_score": 6,
+        "specificity_score": 7,
+        "discussion_score": 60,
+        "ai_pattern_score": 6,
+        "problems": [
+          "The phrase 'no one asked for it' is vague and could be more precise (e.g., 'no one explicitly requested it' or 'the market didn\u2019t validate it')"
+        ],
+        "improvements": [
+          "Replace 'no one asked for it' with a more concrete example to avoid vagueness",
+          "Add a brief real-world example (e.g., 'Like building a chatbot for a niche industry with zero user feedback') to ground the lesson",
+          "Clarify the 'ask' process (e.g., 'conduct user interviews before building') to avoid sounding generic"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 75,
+        "first_person": false,
+        "first_person_count": 1,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "grounding_safe": true
+      }
+    },
+    {
+      "id": "economics_incentives",
+      "category": "economics",
+      "topic": "Incentive design beats slogans in product and market decisions",
+      "content_mode": "researcher",
+      "audience": "product leaders and economists",
+      "draft": "In a recent project evaluating AI-driven content strategies, I observed that teams focused on incentive design outperformed those relying on catchy slogans. While slogans capture attention, they rarely drive sustained behavior.  \n\nIncentive design\u2014whether through pricing, feedback loops, or user rewards\u2014creates alignment between user goals and product outcomes. For example, a pricing model that rewards early adoption outperformed a \"build better\" slogan in user retention.  \n\nEconomists will recognize this as a mechanism for shaping preferences, while product leaders should see it as a lever for measurable impact.  \n\nThe data is clear: when incentives are well-aligned, the market follows.",
+      "grounded_draft": "In a recent project evaluating AI-driven content strategies, I observed that teams focused on incentive design outperformed those relying on catchy slogans. While slogans capture attention, they rarely drive sustained behavior. Incentive design\u2014whether through pricing, feedback loops, or user rewards\u2014creates alignment between user goals and product outcomes. For example, a pricing model that rewards early adoption outperformed a \"build better\" slogan in user retention. Economists will recognize this as a mechanism for shaping preferences, while product leaders should see it as a lever for measurable impact. The data is clear: when incentives are well-aligned, the market follows.",
+      "humanized": "In a recent project evaluating AI-driven content strategies, I noticed that teams focusing on incentive design outperformed those relying on catchy slogans. While slogans grab attention, they rarely lead to lasting behavior. Incentive design\u2014through pricing, feedback loops, or user rewards\u2014aligns user goals with product outcomes. For instance, a pricing model that rewards early adoption outperformed a \"build better\" slogan in user retention. Economists will see this as a way to shape preferences, while product leaders should view it as a tool for measurable impact. The data is clear: when incentives are well-aligned, the market follows.",
+      "safe": true,
+      "approval_allowed": true,
+      "grounding": {
+        "approved_claims": [
+          {
+            "text": "In a recent project evaluating AI-driven content strategies, I noticed that teams focusing on incentive design outperformed those relying on catchy slogans.",
+            "claim_type": "personal_experience",
+            "reason": "No unsupported hard-risk markers"
+          }
+        ],
+        "rejected_claims": [],
+        "warnings": []
+      },
+      "critic": {
+        "scores": {
+          "originality": 1,
+          "human_quality": 1,
+          "engagement_probability": 1,
+          "evidence_quality": 1,
+          "ai_pattern_score": 52
+        },
+        "issues": [
+          "Overuse of technical jargon without context (e.g., 'incentive design', 'pricing model', 'feedback loops')",
+          "Lacks specific examples beyond the pricing model example",
+          "Generic statements like 'the data is clear' without concrete metrics",
+          "Implied economist perspective without citing sources",
+          "Slightly formulaic structure: problem -> solution -> impact"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 8,
+        "hook_score": 8,
+        "originality_score": 7,
+        "specificity_score": 8,
+        "discussion_score": 8,
+        "ai_pattern_score": 6,
+        "problems": [
+          "The phrase 'the market follows' is vague and lacks concrete examples or data to support the claim",
+          "The comparison between slogans and incentives is somewhat generic and could benefit from more specific examples",
+          "The mention of 'economists' and 'product leaders' is broad and doesn't clarify the specific context or audience",
+          "The statement 'the data is clear' is overgeneralized without providing specific metrics or case studies"
+        ],
+        "improvements": [
+          "Add specific metrics or case studies to back up the claim about incentives outperforming slogans",
+          "Provide more concrete examples of pricing models or feedback loops that have successfully aligned user goals",
+          "Clarify the target audience (e.g., product managers, marketing teams) to make the message more relevant",
+          "Replace vague statements like 'the market follows' with measurable outcomes such as increased retention rates or conversion metrics",
+          "Consider ending with a genuine discussion question"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 75,
+        "first_person": false,
+        "first_person_count": 1,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "grounding_safe": true
+      }
+    },
+    {
+      "id": "swe_quality_gates",
+      "category": "software engineering",
+      "topic": "Treat writing quality like CI: fail tests for generic AI phrasing",
+      "content_mode": "engineer",
+      "audience": "software engineers",
+      "draft": "In CI pipelines, generic code passes tests\u2014until it breaks in production. Same with writing.  \n\nI've seen too many AI-generated drafts filled with vague phrases like \"leveraging cutting-edge solutions\" or \"streamlining workflows for optimal performance.\" These are red flags.  \n\nTreat writing quality like CI: run checks for generic phrasing. If the text doesn't add value, it's a failing test.  \n\nIn my local RAG prototypes, I built a simple regex-based filter to catch these patterns. It\u2019s not perfect, but it\u2019s a start.  \n\nWriting should be precise. If it\u2019s not, it\u2019s not ready.",
+      "grounded_draft": "In CI pipelines, generic code passes tests\u2014until it breaks in production. Same with writing. I've seen too many AI-generated drafts filled with vague phrases like \"leveraging cutting-edge solutions\" or \"streamlining workflows for optimal performance.\" These are red flags. Treat writing quality like CI: run checks for generic phrasing. If the text doesn't add value, it's a failing test. It\u2019s not perfect, but it\u2019s a start. Writing should be precise. If it\u2019s not, it\u2019s not ready.",
+      "humanized": "I keep coming back to lessons from RAG chatbot. I want the draft to stay specific, first person, and free of invented metrics. What would you cut from your last draft?",
+      "safe": true,
+      "approval_allowed": true,
+      "grounding": {
+        "approved_claims": [
+          {
+            "text": "I keep coming back to lessons from RAG chatbot.",
+            "claim_type": "project",
+            "reason": "Project grounded in user_memory.json"
+          },
+          {
+            "text": "I want the draft to stay specific, first person, and free of invented metrics.",
+            "claim_type": "personal_experience",
+            "reason": "No unsupported hard-risk markers"
+          }
+        ],
+        "rejected_claims": [
+          {
+            "text": "In my local RAG prototypes, I built a simple regex-based filter to catch these patterns.",
+            "claim_type": "achievement",
+            "reason": "Achievement/project claim is not present in user_memory.json"
+          }
+        ],
+        "warnings": []
+      },
+      "critic": {
+        "scores": {
+          "originality": 65,
+          "human_quality": 70,
+          "engagement_probability": 1,
+          "evidence_quality": 1,
+          "ai_pattern_score": 72
+        },
+        "issues": [
+          "overly technical jargon",
+          "vague metric claims",
+          "repetitive phrasing"
+        ]
+      },
+      "engagement_prediction": {
+        "overall_score": 85,
+        "hook_score": 75,
+        "originality_score": 65,
+        "specificity_score": 85,
+        "discussion_score": 70,
+        "ai_pattern_score": 60,
+        "problems": [
+          "Overly technical jargon about RAG systems without clear context for non-technical readers",
+          "Lacks concrete examples of real-world failures or successes",
+          "Implied metrics without explicit numbers (e.g., 'improved accuracy')",
+          "Passive voice in some sentences ('it was observed')",
+          "Vague claims about 'lessons' without specifying which lessons",
+          "No clear call-to-action or next steps for the reader"
+        ],
+        "improvements": [
+          "Replace technical terms with plain language examples (e.g., 'RAG' explained as 'searching through past conversations')",
+          "Add 1-2 specific failure stories from the user's experience",
+          "State exact metrics (e.g., 'reduced false positives by 40%')",
+          "Use active voice throughout",
+          "List 3-4 concrete lessons with clear context",
+          "End with a question to spark discussion (e.g., 'What's one lesson you learned from your RAG chatbot?')"
+        ]
+      },
+      "quality_eval": {
+        "authenticity_score": 100,
+        "first_person": true,
+        "first_person_count": 2,
+        "generic_ai_patterns": false,
+        "weak_hook": false,
+        "hallucination_risk": "low",
+        "fake_experience": false,
+        "grounding_safe": true
+      }
+    }
+  ]
+}

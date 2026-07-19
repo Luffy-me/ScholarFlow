@@ -50,8 +50,12 @@ curl -X POST http://localhost:8000/api/v1/generate \
 # Ensure Ollama is running and the model is pulled
 ollama serve
 ollama pull qwen3:8b
+ollama pull qwen3:4b
 
 export OLLAMA_MODEL=qwen3:8b
+export WRITER_MODEL=qwen3:8b
+export CRITIC_MODEL=qwen3:4b
+export PREDICTOR_MODEL=qwen3:4b
 export OLLAMA_THINK=false
 
 # Single generation via CLI
@@ -61,7 +65,7 @@ python -m apps.api.cli.generate \
   --audience "technical founders"
 
 # Dataset validation (examples/test_topics.json)
-python -m apps.api.cli.validate --out examples/validation_report.json
+python -m apps.api.cli.validate --out examples/validation_report_v2.json
 ```
 
 Environment:
@@ -69,9 +73,14 @@ Environment:
 | Variable | Default | Purpose |
 |---|---|---|
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama endpoint |
-| `OLLAMA_MODEL` | `qwen3:8b` | Model name |
+| `OLLAMA_MODEL` | `qwen3:8b` | Default model |
+| `WRITER_MODEL` | `qwen3:8b` | Writer stage model |
+| `CRITIC_MODEL` | `qwen3:4b` | Critic stage model |
+| `PREDICTOR_MODEL` | `qwen3:4b` | Engagement predictor model |
 | `OLLAMA_THINK` | `false` | Disable Qwen3 hidden thinking tokens |
 | `OLLAMA_NUM_CTX` | `4096` | Context window |
+
+Truth Layer v2 docs: [docs/TRUTH_LAYER_V2.md](docs/TRUTH_LAYER_V2.md)
 
 ## AI evaluation tests
 

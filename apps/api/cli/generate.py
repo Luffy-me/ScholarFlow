@@ -14,25 +14,19 @@ from typing import Any
 
 from apps.api.config import settings
 from apps.api.pipeline import run_generation_pipeline
-from models.fake import FakeProvider
-from models.ollama import OllamaProvider, OllamaUnavailableError
+from apps.api.providers import build_base_provider
+from models.ollama import OllamaUnavailableError
 from shared.quality import scan_text
 
 
 def build_provider(*, fake: bool = False) -> Any:
-    if fake or settings.use_fake_provider:
-        return FakeProvider()
-    return OllamaProvider(
-        base_url=settings.ollama_base_url,
-        default_model=settings.ollama_model,
-        think=settings.ollama_think,
-        num_ctx=settings.ollama_num_ctx,
-    )
+    return build_base_provider(fake=fake)
 
 
 def _print_report(result: dict[str, Any]) -> None:
     critic = result.get("critic", {})
     engagement = result.get("engagement_prediction", {})
+    grounding = result.get("grounding", {})
     scan = scan_text(result.get("final_text", ""))
 
     print("=" * 72)
@@ -41,16 +35,31 @@ def _print_report(result: dict[str, Any]) -> None:
     print(f"Topic:        {result.get('topic')}")
     print(f"Content mode: {result.get('content_mode')}")
     print(f"Audience:     {result.get('audience') or '(none)'}")
-    print(f"Model:        {settings.ollama_model}")
+    print(f"Writer model: {settings.model_for_stage('writer')}")
+    print(f"Critic model: {settings.model_for_stage('critic')}")
+    print(f"Predictor:    {settings.model_for_stage('predictor')}")
+    print(f"Safe:         {result.get('safe')}")
+    print(f"Approval:     {result.get('approval_allowed')}")
+    print(f"Status:       {result.get('status')}")
     print("-" * 72)
     print("GENERATED POST (writer draft)")
     print("-" * 72)
     print(result.get("draft", "").strip())
     print()
     print("-" * 72)
+    print("GROUNDED DRAFT (after claim checker)")
+    print("-" * 72)
+    print((result.get("grounded_draft") or "").strip())
+    print()
+    print("-" * 72)
     print("HUMANIZED VERSION")
     print("-" * 72)
     print(result.get("final_text", "").strip())
+    print()
+    print("-" * 72)
+    print("GROUNDING (Truth Layer v2)")
+    print("-" * 72)
+    print(json.dumps(grounding, indent=2)[:4000])
     print()
     print("-" * 72)
     print("CRITIC SCORE")
@@ -77,7 +86,7 @@ def _print_report(result: dict[str, Any]) -> None:
                 "generic_ai": scan.has_generic_ai,
                 "weak_hook": scan.has_weak_hook,
                 "fake_experience": scan.has_fake_experience,
-                "hallucination_risk": "high" if scan.has_fake_experience else "low",
+                "hallucination_risk": "high" if (not result.get("safe")) else "low",
             },
             indent=2,
         )
@@ -89,19 +98,28 @@ async def _async_main(args: argparse.Namespace) -> int:
     provider = build_provider(fake=args.fake)
     if not args.fake:
         try:
-            status = await provider.ensure_available()
+            status = await provider.ensure_available()  # type: ignore[attr-defined]
             print(f"Ollama online. Models: {', '.join(status.models) or 'none'}")
-            print(f"Using model: {settings.ollama_model}")
+            print(
+                "Models — writer={w} critic={c} predictor={p}".format(
+                    w=settings.model_for_stage("writer"),
+                    c=settings.model_for_stage("critic"),
+                    p=settings.model_for_stage("predictor"),
+                )
+            )
         except OllamaUnavailableError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
             return 2
+        except AttributeError:
+            pass
 
     result = await run_generation_pipeline(
-        provider,
+        None if not args.fake else provider,
         topic=args.topic,
         content_mode=args.mode,
         format=args.format,
         audience=args.audience,
+        fake=args.fake,
     )
     _print_report(result)
 
@@ -110,7 +128,7 @@ async def _async_main(args: argparse.Namespace) -> int:
             json.dump(result, handle, indent=2)
             handle.write("\n")
         print(f"Wrote JSON report to {args.json_out}")
-    return 0
+    return 0 if result.get("approval_allowed", True) else 3
 
 
 def main(argv: list[str] | None = None) -> int:
