@@ -74,23 +74,63 @@ class FakeProvider(ModelProvider):
             if broad_topic and empty_memory:
                 text = json.dumps(
                     {
-                        "core_insight": "AI is changing everything across industries.",
+                        "hidden_pattern": "AI is changing everything across industries.",
                         "why_it_matters": "The future of work depends on embracing digital transformation.",
                         "common_belief": "AI will transform every industry.",
-                        "new_perspective": "AI is transforming every industry, so teams should stay ahead of the curve.",
-                        "supporting_evidence": "",
+                        "contrarian_view": "AI is transforming every industry, so teams should stay ahead of the curve.",
+                        "supporting_reasoning": "",
                         "reader_takeaway": "Believe in yourself and unlock your potential with AI.",
+                        "originality_score": 12,
                     }
                 )
             else:
                 text = json.dumps(
                     {
-                        "core_insight": "The bottleneck in local LLM work is usually the evaluation loop, not model size.",
+                        "hidden_pattern": "The bottleneck in local LLM work is usually the evaluation loop, not model size.",
                         "why_it_matters": "Teams waste cycles upgrading models before measuring draft failure modes.",
                         "common_belief": "Bigger or newer models automatically produce better content.",
-                        "new_perspective": "Constrained evaluation criteria and failing tests create more lift than model swaps.",
-                        "supporting_evidence": "Compared local LLM workflows with cloud APIs for content drafting",
+                        "contrarian_view": "Constrained evaluation criteria and failing tests create more lift than model swaps.",
+                        "supporting_reasoning": "Compared local LLM workflows with cloud APIs for content drafting",
                         "reader_takeaway": "Write one failing test for generic phrasing, then compare two models against it.",
+                        "originality_score": 82,
+                    }
+                )
+        elif "JSON" in blob.upper() and (
+            "deepseek debate critic" in blob.lower()
+            or "deepseek final scorer" in blob.lower()
+        ):
+            generic = "in today's rapidly evolving world" in blob.lower() or "revolutionizing" in blob.lower()
+            if "final scorer" in blob.lower():
+                text = json.dumps(
+                    {
+                        "final_score": 28 if generic else 76,
+                        "originality_score": 20 if generic else 74,
+                        "argument_strength": 25 if generic else 72,
+                        "evidence_score": 20 if generic else 70,
+                        "ai_pattern_risk": 88 if generic else 22,
+                        "accepted": (not generic),
+                        "summary": (
+                            "Rejected: generic AI writing patterns dominate."
+                            if generic
+                            else "Accepted after debate rewrite."
+                        ),
+                    }
+                )
+            else:
+                text = json.dumps(
+                    {
+                        "generic_ideas": ["In today's rapidly evolving world"] if generic else [],
+                        "weak_arguments": ["No concrete tradeoff"] if generic else [],
+                        "missing_evidence": ["No verified experiment"] if generic else [],
+                        "originality_issues": ["Template opening"] if generic else [],
+                        "ai_writing_patterns": ["generic_opening"] if generic else [],
+                        "improvements": [
+                            "Replace the generic opening with a specific observation.",
+                            "Add one verified experiment detail.",
+                        ],
+                        "rejected": generic,
+                        "reject_reason": "Generic AI writing patterns dominate the draft." if generic else "",
+                        "review_score": 22 if generic else 70,
                     }
                 )
         elif "JSON" in blob.upper() and ("discussion_question" in blob.lower() or "content strategist" in blob.lower() or "Produce strategy" in blob):

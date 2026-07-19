@@ -2,44 +2,39 @@
 
 ## Purpose
 
-Generate original insights **before** content creation.
+Generate original insights **before** content creation using **DeepSeek reasoning**.
 
 ## Pipeline position
 
 ```text
-Research
+Research (DeepSeek)
   ↓
-Trend Analysis
+Trend Analysis (DeepSeek)
   ↓
-Insight Engine
+Insight Engine (DeepSeek)
   ↓
 Angle Finder
   ↓
 Strategist
   ↓
-Writer
+Writer (Qwen)
   ↓
-Claim Checker
+Debate Mode
   ↓
-AI Writing Quality Analyzer
-  ↓
-Humanizer
-  ↓
-Critic
-  ↓
-Engagement Predictor
+…
 ```
 
 ## Output
 
 ```json
 {
-  "core_insight": "",
-  "why_it_matters": "",
+  "hidden_pattern": "",
   "common_belief": "",
-  "new_perspective": "",
-  "supporting_evidence": "",
-  "reader_takeaway": ""
+  "contrarian_view": "",
+  "why_it_matters": "",
+  "supporting_reasoning": "",
+  "reader_takeaway": "",
+  "originality_score": 0
 }
 ```
 
@@ -51,9 +46,9 @@ Avoid:
 - obvious conclusions
 
 Prefer:
-- counterintuitive ideas
+- hidden patterns
+- counterintuitive / contrarian views
 - lessons from experiments
-- expert perspectives
 - practical frameworks
 - unique observations
 
@@ -63,11 +58,6 @@ Prefer:
 
 - `schemas.py`
 - `prompts.py`
-- `insight_generator.py` — generation + strength scoring (`is_weak` / `is_strong`)
+- `insight_generator.py`
 
-## Tests
-
-1. Generic AI topic → weak insight
-2. Specific personal experience → stronger insight
-3. Common belief vs new perspective contrast
-4. Reader takeaway is actionable
+Routed via `models/router.py` to the DeepSeek family.

@@ -1,8 +1,8 @@
-"""Pipeline orchestrator with insight + writing-quality intelligence.
+"""Pipeline orchestrator with DeepSeek reasoning + Qwen writing.
 
 Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
-Writer → Claim Checker → AI Writing Quality Analyzer → Humanizer →
-Critic → Engagement Predictor
+Writer → (Debate Mode) → Claim Checker → AI Writing Quality Analyzer →
+Humanizer → Critic → Engagement Predictor
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from typing import Any
 
 from agents.angle_finder import AngleFinderAgent, AngleFinderInput
 from agents.critic import CriticAgent, CriticInput
+from agents.debate import DebateMode
 from agents.engagement_predictor import EngagementPredictorAgent, EngagementPredictorInput
 from agents.grounding import ClaimCheckerAgent, GroundingInput, check_claims
 from agents.humanizer import HumanizerAgent, HumanizerInput
@@ -22,8 +23,10 @@ from agents.strategist import StrategistAgent, StrategistInput
 from agents.trend_analyzer import TrendAnalyzerAgent, TrendAnalyzerInput
 from agents.writer import WriterAgent, WriterInput
 from agents.writing_quality import WritingQualityAnalyzer, WritingQualityInput
-from apps.api.providers import build_base_provider, provider_for_stage
+from apps.api.config import settings
+from apps.api.providers import provider_for_stage
 from models.base import ModelProvider
+from models.router import RouterCallRecorder
 from shared.knowledge import load_user_memory
 
 
@@ -37,14 +40,17 @@ async def run_generation_pipeline(
     user_memory: dict[str, Any] | None = None,
     fake: bool = False,
     selected_angle_index: int = 0,
+    debate_mode: bool | None = None,
 ) -> dict[str, Any]:
     memory = normalize_memory(user_memory or load_user_memory())
     pipeline_run_id = uuid.uuid4()
+    recorder = RouterCallRecorder()
+    use_debate = settings.debate_mode if debate_mode is None else debate_mode
 
     def stage_provider(stage: str) -> ModelProvider:
         if provider is not None:
             return provider
-        return provider_for_stage(stage, fake=fake)
+        return provider_for_stage(stage, fake=fake, recorder=recorder)
 
     researcher = ResearcherAgent(stage_provider("researcher"))
     trend_analyzer = TrendAnalyzerAgent(stage_provider("trend_analyzer"))
@@ -52,7 +58,7 @@ async def run_generation_pipeline(
     angle_finder = AngleFinderAgent(stage_provider("angle_finder"))
     strategist = StrategistAgent(stage_provider("strategist"))
     writer = WriterAgent(stage_provider("writer"))
-    claim_checker = ClaimCheckerAgent(build_base_provider(fake=True))
+    claim_checker = ClaimCheckerAgent(stage_provider("claim_checker"))
     quality_analyzer = WritingQualityAnalyzer(stage_provider("writing_quality"))
     humanizer = HumanizerAgent(stage_provider("humanizer"))
     critic = CriticAgent(stage_provider("critic"))
@@ -128,29 +134,49 @@ async def run_generation_pipeline(
         )
     )
 
+    writer_extra = {
+        "audience": audience,
+        "angle": selected_angle,
+        "strategy": strategy.data,
+        "insight": insight,
+    }
     written = await writer.run(
         WriterInput(
             topic=topic,
             content_mode=content_mode,
             format=format,
             user_memory=memory,
-            extra={
-                "audience": audience,
-                "angle": selected_angle,
-                "strategy": strategy.data,
-                "insight": insight,
-            },
+            extra=writer_extra,
         )
     )
 
+    debate_payload: dict[str, Any] | None = None
+    post_write_text = written.text
+    if use_debate:
+        debate = DebateMode(
+            writer_provider=stage_provider("writer"),
+            critic_provider=stage_provider("debate_critic"),
+            rewrite_provider=stage_provider("debate_rewrite"),
+        )
+        debate_result = await debate.run(
+            topic=topic,
+            content_mode=content_mode,
+            format=format,
+            user_memory=memory,
+            writer_extra=writer_extra,
+            initial_draft=written.text,
+        )
+        debate_payload = debate_result.model_dump()
+        post_write_text = debate_result.draft_v2 or written.text
+
     grounded = await claim_checker.run(
-        GroundingInput(text=written.text, user_memory=memory, topic=topic)
+        GroundingInput(text=post_write_text, user_memory=memory, topic=topic)
     )
 
     quality = await quality_analyzer.run(
         WritingQualityInput(
-            content=grounded.text or written.text,
-            text=grounded.text or written.text,
+            content=grounded.text or post_write_text,
+            text=grounded.text or post_write_text,
             content_mode=content_mode,
             user_memory=memory,
             verified_memory=approved_experience_texts(memory),
@@ -159,7 +185,7 @@ async def run_generation_pipeline(
 
     humanized = await humanizer.run(
         HumanizerInput(
-            text=grounded.text or written.text,
+            text=grounded.text or post_write_text,
             user_memory=memory,
             topic=topic,
             extra={"improvements": quality.improvements, "writing_quality": quality.as_report()},
@@ -179,6 +205,9 @@ async def run_generation_pipeline(
     final_check = check_claims(final_text, memory)
     safe = final_check.safe
     approval_allowed = safe
+    if debate_payload and debate_payload.get("generic_rejected"):
+        approval_allowed = False
+        safe = False
 
     final_quality = await quality_analyzer.run(
         WritingQualityInput(
@@ -203,6 +232,8 @@ async def run_generation_pipeline(
     )
 
     status = "reviewed" if approval_allowed else "unsafe"
+    if debate_payload and debate_payload.get("generic_rejected"):
+        status = "rejected_generic"
 
     return {
         "pipeline_run_id": str(pipeline_run_id),
@@ -217,11 +248,17 @@ async def run_generation_pipeline(
         "selected_angle": selected_angle,
         "strategy": strategy.data,
         "draft": written.text,
+        "debate": debate_payload,
         "grounded_draft": grounded.text,
         "final_text": final_text,
         "safe": safe,
         "approval_allowed": approval_allowed,
         "status": status,
+        "model_routing": {
+            "calls": list(recorder.calls),
+            "deepseek_stages": recorder.stages_for_family("deepseek"),
+            "qwen_stages": recorder.stages_for_family("qwen"),
+        },
         "grounding": {
             "approved_claims": [c.model_dump() for c in final_check.approved_claims],
             "rejected_claims": [c.model_dump() for c in final_check.rejected_claims]
@@ -241,6 +278,7 @@ async def run_generation_pipeline(
             "angle_finder": angles_out.model_dump(),
             "strategist": strategy.model_dump(),
             "writer": written.model_dump(),
+            "debate": debate_payload,
             "claim_checker": grounded.model_dump(),
             "writing_quality": quality.model_dump(),
             "humanizer": humanized.model_dump(),

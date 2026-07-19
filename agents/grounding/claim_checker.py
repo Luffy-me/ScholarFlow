@@ -330,7 +330,11 @@ class ClaimCheckerAgent(Agent[GroundingInput, GroundingOutput]):
                 "warnings": result.warnings,
                 "safe": result.safe,
             },
-            meta={"agent": self.name, "deterministic": True},
+            meta={
+                "agent": self.name,
+                "deterministic": True,
+                "reasoning_family": "deepseek",
+            },
         )
 
 

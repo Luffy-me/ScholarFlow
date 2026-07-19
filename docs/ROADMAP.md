@@ -233,6 +233,23 @@ See [INSIGHT_ENGINE.md](./INSIGHT_ENGINE.md).
 
 ---
 
+## Phase 1.10 — DeepSeek Reasoning Layer
+
+**Status:** implemented
+
+### Scope
+
+1. `models/deepseek_provider.py` + `models/router.py`
+2. DeepSeek for research / trends / insight / claim checker / critic / predictor
+3. Qwen for writer / humanizer
+4. Insight Engine DeepSeek output shape (`hidden_pattern`, `contrarian_view`, `originality_score`, …)
+5. Debate Mode: Qwen draft → DeepSeek critique → Qwen rewrite → DeepSeek final score
+6. Tests for routing, debate rejection of generic posts, insight improvement
+
+See [DEEPSEEK_REASONING.md](./DEEPSEEK_REASONING.md).
+
+---
+
 ## Phase 2 — Simple Web Interface
 
 ### Scope

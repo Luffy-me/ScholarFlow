@@ -9,22 +9,23 @@ This is **not** a generic AI text generator.
 The product behaves like a **content intelligence system**:
 
 ```text
-Research → Trend Analysis → Insight Engine → Angle Finder → Strategize →
-Write → Claim Check → Writing Quality Analyze → Humanize → Critique → Predict → Export
+Research (DeepSeek) → Trend Analysis → Insight Engine (DeepSeek) →
+Angle Finder → Strategize → Write (Qwen) → Debate (Qwen↔DeepSeek) →
+Claim Check → Writing Quality → Humanize (Qwen) → Critique (DeepSeek) → Predict → Export
 ```
 
 Concrete behaviors:
 
 1. Discover what topics are gaining attention.
-2. Research information from trusted sources.
-3. Generate an original insight (belief contrast + actionable takeaway) before writing.
+2. Research and reason with DeepSeek; write with Qwen.
+3. Generate an original insight (hidden pattern + contrarian view + originality score).
 4. Analyze angles and decide strategy.
 5. Generate human-like first-person LinkedIn posts.
-6. Ground claims against verified experience memory (Truth Layer).
-7. Score low-quality AI writing pattern risk (not AI detection / authorship claims).
-8. Humanize drafts into authentic voice without inventing facts.
-9. Critique truth, authenticity, pattern risk, and engagement potential.
-10. Predict engagement quality (weakness detection, not virality).
+6. Debate Mode: DeepSeek critiques → Qwen rewrites → DeepSeek final score.
+7. Ground claims against verified experience memory (Truth Layer).
+8. Score low-quality AI writing pattern risk (not AI detection / authorship claims).
+9. Humanize drafts into authentic voice without inventing facts.
+10. Critique and predict engagement quality with DeepSeek reasoning.
 
 The goal is to help users turn **real knowledge, experiences, and research** into high-quality LinkedIn content.
 

@@ -1,4 +1,4 @@
-"""Insight Engine — original insights before content creation."""
+"""Insight Engine — DeepSeek reasoning for original insights before writing."""
 
 from __future__ import annotations
 
@@ -51,7 +51,7 @@ _ACTIONABLE_RE = re.compile(
 
 _COUNTERINTUITIVE_RE = re.compile(
     r"\b(not|instead|rather than|tradeoff|constraint|surprising|counter|"
-    r"opposite|myth|wrong|less|fewer|bottleneck)\b",
+    r"opposite|myth|wrong|less|fewer|bottleneck|hidden)\b",
     re.I,
 )
 
@@ -59,11 +59,11 @@ _COUNTERINTUITIVE_RE = re.compile(
 def _blob(insight: Insight) -> str:
     return " ".join(
         [
-            insight.core_insight,
+            insight.hidden_pattern,
             insight.why_it_matters,
             insight.common_belief,
-            insight.new_perspective,
-            insight.supporting_evidence,
+            insight.contrarian_view,
+            insight.supporting_reasoning,
             insight.reader_takeaway,
         ]
     ).strip()
@@ -75,7 +75,7 @@ def evaluate_insight_quality(insight: Insight, *, topic: str = "") -> InsightQua
     text = _blob(insight).lower()
     score = 40
 
-    if not insight.core_insight.strip():
+    if not insight.hidden_pattern.strip():
         flags.append("missing_core_insight")
         return InsightQuality(
             strength_score=0,
@@ -95,12 +95,10 @@ def evaluate_insight_quality(insight: Insight, *, topic: str = "") -> InsightQua
         score -= 25
         flags.append("motivational_statement")
 
-    # Obvious conclusion: belief and perspective nearly identical
     belief = insight.common_belief.strip().lower()
-    perspective = insight.new_perspective.strip().lower()
+    perspective = insight.contrarian_view.strip().lower()
     has_contrast = bool(belief and perspective and belief != perspective)
     if has_contrast:
-        # Soft overlap check
         belief_tokens = set(re.findall(r"[a-z]{4,}", belief))
         perspective_tokens = set(re.findall(r"[a-z]{4,}", perspective))
         if belief_tokens and perspective_tokens:
@@ -127,33 +125,40 @@ def evaluate_insight_quality(insight: Insight, *, topic: str = "") -> InsightQua
         flags.append("takeaway_not_actionable")
         score -= 10
 
-    if _COUNTERINTUITIVE_RE.search(insight.core_insight) or _COUNTERINTUITIVE_RE.search(
-        insight.new_perspective
+    if _COUNTERINTUITIVE_RE.search(insight.hidden_pattern) or _COUNTERINTUITIVE_RE.search(
+        insight.contrarian_view
     ):
         score += 12
     else:
         flags.append("lacks_counterintuitive_edge")
 
-    # Specificity signals: tools, experiments, named systems
     if re.search(
         r"\b(RAG|Qwen|Ollama|evaluation loop|MacBook|ScholarFlow|benchmark|experiment|"
-        r"workflow|prompt|retrieval|chunking)\b",
+        r"workflow|prompt|retrieval|chunking|DeepSeek)\b",
         _blob(insight),
         re.I,
     ):
         score += 14
     elif topic and topic.lower() in {"ai", "artificial intelligence", "the future of ai"}:
-        # Broad AI topics without specifics stay weak.
         score -= 8
         flags.append("broad_topic_without_specificity")
 
-    if insight.supporting_evidence.strip():
+    if insight.supporting_reasoning.strip():
         score += 6
     else:
         flags.append("thin_evidence")
 
+    # Blend model-provided originality when present.
+    if insight.originality_score:
+        score = int(round((score * 0.7) + (insight.originality_score * 0.3)))
+
     strength = clamp_score(score)
-    is_strong = strength >= 65 and has_contrast and takeaway_actionable and "generic_observation" not in flags
+    is_strong = (
+        strength >= 65
+        and has_contrast
+        and takeaway_actionable
+        and "generic_observation" not in flags
+    )
     is_weak = strength < 55 or "generic_observation" in flags or "motivational_statement" in flags
 
     return InsightQuality(
@@ -176,15 +181,33 @@ def _parse_insight(raw: str) -> Insight | None:
         return None
     if not isinstance(payload, dict):
         return None
+
+    hidden = str(
+        payload.get("hidden_pattern")
+        or payload.get("core_insight")
+        or ""
+    ).strip()
+    contrarian = str(
+        payload.get("contrarian_view")
+        or payload.get("new_perspective")
+        or ""
+    ).strip()
+    reasoning = str(
+        payload.get("supporting_reasoning")
+        or payload.get("supporting_evidence")
+        or ""
+    ).strip()
+
     insight = Insight(
-        core_insight=str(payload.get("core_insight", "")).strip(),
+        hidden_pattern=hidden,
         why_it_matters=str(payload.get("why_it_matters", "")).strip(),
         common_belief=str(payload.get("common_belief", "")).strip(),
-        new_perspective=str(payload.get("new_perspective", "")).strip(),
-        supporting_evidence=str(payload.get("supporting_evidence", "")).strip(),
+        contrarian_view=contrarian,
+        supporting_reasoning=reasoning,
         reader_takeaway=str(payload.get("reader_takeaway", "")).strip(),
+        originality_score=clamp_score(payload.get("originality_score", 0) or 0),
     )
-    if not insight.core_insight:
+    if not insight.hidden_pattern:
         return None
     return insight
 
@@ -198,7 +221,6 @@ def _deterministic_insight(
     trends: dict[str, Any],
     verified: list[str],
 ) -> Insight:
-    """Fallback insight that stays specific when memory exists, weak when topic is generic."""
     topic_l = (topic or "").strip().lower()
     findings = [str(x) for x in (research.get("key_findings") or []) if str(x).strip()]
     trend_why = str((trends or {}).get("why_it_matters") or "").strip()
@@ -213,68 +235,71 @@ def _deterministic_insight(
     } and not experience and not findings
 
     if broad_ai:
-        # Intentionally weak: mirrors generic AI commentary so quality scoring can reject it.
         return Insight(
-            core_insight="AI is changing everything across industries.",
+            hidden_pattern="AI is changing everything across industries.",
             why_it_matters="The future of work depends on embracing digital transformation.",
             common_belief="AI will transform every industry.",
-            new_perspective="AI is transforming every industry, so teams should stay ahead of the curve.",
-            supporting_evidence="",
+            contrarian_view="AI is transforming every industry, so teams should stay ahead of the curve.",
+            supporting_reasoning="",
             reader_takeaway="Believe in yourself and unlock your potential with AI.",
+            originality_score=15,
         )
 
     if experience:
-        core = (
-            f"After {experience[0].lower() + experience[1:] if experience else 'recent work'}, "
-            f"the useful lesson on {topic} is that process design beats slogans."
-        )
-        # Cleaner core when experience is already a sentence-like statement.
         if experience.lower().startswith(("built", "compared", "tested", "i ")):
-            core = (
-                f"A lesson from '{experience}' on {topic}: the bottleneck is usually the evaluation "
-                f"loop, not the headline tool."
+            hidden = (
+                f"A hidden pattern from '{experience}' on {topic}: the bottleneck is usually "
+                f"the evaluation loop, not the headline tool."
             )
-        evidence = experience
-        takeaway = (
-            f"Pick one workflow step in your {topic} process, write a failing test for quality, "
-            f"and measure whether a bigger model still helps."
-        )
-        common = f"Most people assume better {topic} outcomes come from bigger/better models or tools."
-        perspective = (
-            f"In practice, constrained experiments and clearer evaluation criteria create more lift "
-            f"than switching tools."
-        )
-    else:
-        finding = findings[0] if findings else f"specific operating constraints around {topic}"
-        core = (
-            f"For {topic}, progress usually stalls on an unstated tradeoff — not on missing inspiration."
-        )
-        evidence = finding if findings else trend_why or f"Research framing on {topic}"
-        takeaway = (
-            f"Write down the constraint you are optimizing for in {topic}, then cut one step that "
-            f"does not serve it."
-        )
-        common = f"Common belief: more information or more tooling automatically improves {topic}."
-        perspective = (
-            f"New perspective: clarifying the constraint and testing one change beats collecting "
-            f"generic best practices."
+        else:
+            hidden = (
+                f"After {experience}, the hidden pattern on {topic} is that process design "
+                f"beats slogans."
+            )
+        return Insight(
+            hidden_pattern=hidden,
+            why_it_matters=(
+                trend_why
+                or f"Operators working on {topic} waste cycles on generic advice that ignores their real bottleneck."
+            ),
+            common_belief=f"Most people assume better {topic} outcomes come from bigger/better models or tools.",
+            contrarian_view=(
+                "In practice, constrained experiments and clearer evaluation criteria create more lift "
+                "than switching tools."
+            ),
+            supporting_reasoning=experience,
+            reader_takeaway=(
+                f"Pick one workflow step in your {topic} process, write a failing test for quality, "
+                f"and measure whether a bigger model still helps."
+            ),
+            originality_score=78,
         )
 
+    finding = findings[0] if findings else f"specific operating constraints around {topic}"
     return Insight(
-        core_insight=core,
+        hidden_pattern=(
+            f"For {topic}, progress usually stalls on an unstated tradeoff — not on missing inspiration."
+        ),
         why_it_matters=(
             trend_why
             or f"Operators working on {topic} waste cycles on generic advice that ignores their real bottleneck."
         ),
-        common_belief=common,
-        new_perspective=perspective,
-        supporting_evidence=evidence,
-        reader_takeaway=takeaway,
+        common_belief=f"Common belief: more information or more tooling automatically improves {topic}.",
+        contrarian_view=(
+            "Contrarian view: clarifying the constraint and testing one change beats collecting "
+            "generic best practices."
+        ),
+        supporting_reasoning=finding if findings else trend_why or f"Research framing on {topic}",
+        reader_takeaway=(
+            f"Write down the constraint you are optimizing for in {topic}, then cut one step that "
+            f"does not serve it."
+        ),
+        originality_score=66,
     )
 
 
 class InsightGenerator:
-    """Generate and quality-score an original insight."""
+    """Generate and quality-score an original insight via DeepSeek reasoning."""
 
     name = "insight_engine"
 
@@ -302,7 +327,7 @@ class InsightGenerator:
         )
 
         insight = fallback
-        meta: dict[str, Any] = {"deterministic": True}
+        meta: dict[str, Any] = {"deterministic": True, "reasoning_family": "deepseek"}
 
         if self.provider is not None:
             user = build_user_prompt(
@@ -318,15 +343,22 @@ class InsightGenerator:
                     ChatMessage(role="system", content=SYSTEM_PROMPT),
                     ChatMessage(role="user", content=user),
                 ],
-                temperature=0.4,
+                temperature=0.3,
                 response_format="json",
             )
             parsed = _parse_insight(result.text)
-            meta = {"provider": result.provider, "model": result.model, "deterministic": False}
+            meta = {
+                "provider": result.provider,
+                "model": result.model,
+                "deterministic": False,
+                "reasoning_family": "deepseek",
+            }
             if parsed is not None:
                 insight = parsed
-                # If the model returns a weak generic insight while we have strong memory,
-                # prefer the deterministic specific fallback.
+                if not insight.originality_score:
+                    insight.originality_score = evaluate_insight_quality(
+                        insight, topic=payload.topic
+                    ).strength_score
                 llm_quality = evaluate_insight_quality(insight, topic=payload.topic)
                 fallback_quality = evaluate_insight_quality(fallback, topic=payload.topic)
                 if llm_quality.is_weak and fallback_quality.strength_score > llm_quality.strength_score:
@@ -337,9 +369,14 @@ class InsightGenerator:
                 meta["deterministic"] = True
                 meta["parse_fallback"] = True
 
+        if not insight.originality_score:
+            insight.originality_score = evaluate_insight_quality(
+                insight, topic=payload.topic
+            ).strength_score
+
         quality = evaluate_insight_quality(insight, topic=payload.topic)
         return InsightEngineOutput(
-            text=insight.core_insight,
+            text=insight.hidden_pattern,
             insight=insight,
             quality=quality,
             data=insight.as_dict(),
@@ -347,7 +384,6 @@ class InsightGenerator:
         )
 
 
-# Pipeline-friendly alias
 InsightEngineAgent = InsightGenerator
 
 
@@ -368,7 +404,6 @@ async def generate_insight(
         "research": research or {},
         "trends": trends or {},
     }
-    # Preserve explicit empty list so callers can force "no memory" weak-insight paths.
     if verified_experiences is not None:
         extra["verified_experiences"] = list(verified_experiences)
     return await agent.run(

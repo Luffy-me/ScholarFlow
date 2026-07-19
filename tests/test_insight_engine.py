@@ -27,6 +27,7 @@ async def test_generic_ai_topic_produces_weak_insight() -> None:
     assert result.quality.is_weak is True
     assert result.quality.strength_score < 55
     assert "generic_observation" in result.quality.flags or "motivational_statement" in result.quality.flags
+    assert result.insight.originality_score < 40
 
 
 @pytest.mark.asyncio
@@ -49,8 +50,9 @@ async def test_specific_personal_experience_produces_stronger_insight() -> None:
     assert strong.quality.strength_score > weak.quality.strength_score
     assert strong.quality.is_strong is True
     assert strong.quality.is_weak is False
-    blob = " ".join(strong.insight.as_dict().values()).lower()
+    blob = " ".join(str(v) for v in strong.insight.as_dict().values()).lower()
     assert "evaluation" in blob or "qwen" in blob or "workflow" in blob
+    assert strong.insight.originality_score > weak.insight.originality_score
 
 
 @pytest.mark.asyncio
@@ -64,9 +66,10 @@ async def test_common_belief_vs_new_perspective_generated(provider: FakeProvider
     )
     insight = result.insight
     assert insight.common_belief.strip()
-    assert insight.new_perspective.strip()
-    assert insight.common_belief.strip().lower() != insight.new_perspective.strip().lower()
+    assert insight.contrarian_view.strip()
+    assert insight.common_belief.strip().lower() != insight.contrarian_view.strip().lower()
     assert result.quality.has_belief_contrast is True
+    assert insight.hidden_pattern.strip()
 
 
 @pytest.mark.asyncio
@@ -96,20 +99,22 @@ async def test_reader_takeaway_is_actionable(provider: FakeProvider) -> None:
 
 def test_evaluate_insight_quality_detects_belief_contrast_and_actionable_takeaway() -> None:
     weak = Insight(
-        core_insight="AI is changing everything",
+        hidden_pattern="AI is changing everything",
         why_it_matters="The future of work",
         common_belief="AI matters",
-        new_perspective="AI matters a lot",
-        supporting_evidence="",
+        contrarian_view="AI matters a lot",
+        supporting_reasoning="",
         reader_takeaway="Stay inspired",
+        originality_score=10,
     )
     strong = Insight(
-        core_insight="The surprising bottleneck is the evaluation loop, not model size.",
+        hidden_pattern="The surprising bottleneck is the evaluation loop, not model size.",
         why_it_matters="Teams upgrade models before measuring failure modes.",
         common_belief="Bigger models automatically produce better drafts.",
-        new_perspective="Failing tests and tighter criteria beat model swaps.",
-        supporting_evidence="Local Qwen evaluation experiments",
+        contrarian_view="Failing tests and tighter criteria beat model swaps.",
+        supporting_reasoning="Local Qwen evaluation experiments",
         reader_takeaway="Write one failing test for generic phrasing, then compare two models.",
+        originality_score=80,
     )
     weak_q = evaluate_insight_quality(weak, topic="AI")
     strong_q = evaluate_insight_quality(strong, topic="local models")

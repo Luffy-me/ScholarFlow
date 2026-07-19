@@ -9,9 +9,10 @@ This is a **content intelligence system**, not a single-prompt text generator.
 Full product pipeline:
 
 ```text
-Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
-Writer → Claim Checker → AI Writing Quality Analyzer → Humanizer →
-Critic → Engagement Predictor → Export
+Research (DeepSeek) → Trend Analysis (DeepSeek) → Insight Engine (DeepSeek) →
+Angle Finder → Strategist → Writer (Qwen) → Debate Mode (Qwen↔DeepSeek) →
+Claim Checker → AI Writing Quality Analyzer → Humanizer (Qwen) →
+Critic (DeepSeek) → Engagement Predictor (DeepSeek) → Export
 ```
 
 ```
@@ -37,7 +38,9 @@ linkedin-content-engine/
 ├── models/
 │   ├── ollama/
 │   ├── qwen/
-│   └── deepseek/
+│   ├── deepseek/
+│   ├── deepseek_provider.py   # DeepSeek reasoning provider
+│   └── router.py              # DeepSeek vs Qwen stage routing
 ├── knowledge/
 │   ├── writing_rules.json
 │   ├── banned_patterns.json
@@ -110,8 +113,18 @@ linkedin-content-engine/
                      ┌─────────────────────┼─────────────────────┐
                      ▼                     ▼                     ▼
                  Ollama              OpenAI/Gemini            Anthropic
-              (Qwen/DeepSeek)         (optional)             (optional)
+              (Qwen writing /         (optional)             (optional)
+               DeepSeek reasoning)
 ```
+
+### Model routing (local-first)
+
+| Family | Responsibility | Default stages |
+|---|---|---|
+| **Qwen** | Human writing voice | `writer`, `humanizer`, debate rewrite |
+| **DeepSeek** | Analysis, reasoning, criticism, insights | `researcher`, `trend_analyzer`, `insight_engine`, `claim_checker`, `critic`, `engagement_predictor`, debate critic |
+
+See [DEEPSEEK_REASONING.md](./DEEPSEEK_REASONING.md).
 
 ---
 
@@ -489,13 +502,13 @@ Phase 1 does **not** build the dashboard first. It ships the core engine behind 
 Topic + format + content_mode + user_memory.json (+ optional evidence)
         │
         ▼
-  Research Agent
+  Research Agent (DeepSeek)
         │
         ▼
-  Trend Analysis Agent
+  Trend Analysis Agent (DeepSeek)
         │
         ▼
-  Insight Engine                ──► core insight + belief contrast + takeaway
+  Insight Engine (DeepSeek)     ──► hidden pattern + contrarian view + originality
         │
         ▼
   Angle Finder Agent
@@ -504,7 +517,10 @@ Topic + format + content_mode + user_memory.json (+ optional evidence)
   Strategist Agent
         │
         ▼
-   Writer Agent                 ──► draft_v1
+   Writer Agent (Qwen)          ──► draft_v1
+        │
+        ▼
+  Debate Mode                   ──► DeepSeek critique → Qwen rewrite → DeepSeek score
         │
         ▼
   Claim Checker (Truth Layer)   ──► grounded draft
@@ -513,13 +529,13 @@ Topic + format + content_mode + user_memory.json (+ optional evidence)
   AI Writing Quality Analyzer   ──► pattern risk + improvements
         │
         ▼
- Humanizer Agent                ──► draft_v2 (style only)
+ Humanizer Agent (Qwen)         ──► style-only polish
         │
         ▼
-  Critic Agent                  ──► truth / authenticity / pattern risk / engagement
+  Critic Agent (DeepSeek)       ──► truth / authenticity / pattern risk / engagement
         │
         ▼
- Engagement Predictor           ──► pre-publish weakness report
+ Engagement Predictor (DeepSeek)──► pre-publish weakness report
         │
         ▼
  Persist GeneratedContent + Feedback scores
