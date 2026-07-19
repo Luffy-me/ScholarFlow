@@ -678,11 +678,23 @@ No n8n workflows ship in Phase 1.
 |---|---|
 | Unit | Banned-pattern detector, score schema validation, memory gate |
 | Agent contract | Writer/humanizer/critic/predictor structured outputs |
+| AI evaluation suite | Required Phase 1 quality gates (below) |
 | Evaluation fixtures | Critic distinguishes good vs bad example posts |
 | API | Generate/save with FakeProvider |
 | UI (Phase 2) | Topic → generate → edit → save |
 
 Use a **FakeProvider** in tests — never invent live external APIs.
+
+### AI evaluation suite (`tests/`)
+
+| File | Must verify |
+|---|---|
+| `test_writer.py` | Prefers first-person authentic writing; rejects fake personal experiences outside `user_memory` |
+| `test_humanizer.py` | Prefers / produces first-person authentic voice over corporate AI tone |
+| `test_critic.py` | Detects generic AI writing; flags fake experiences; identifies weak hooks |
+| `test_engagement_predictor.py` | Returns structured score JSON; flags weak hooks / AI patterns |
+
+These tests are part of the Phase 1 Definition of Done.
 
 ---
 

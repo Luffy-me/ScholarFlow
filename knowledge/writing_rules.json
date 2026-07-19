@@ -1,0 +1,29 @@
+{
+  "voice": {
+    "prefer_first_person": true,
+    "short_paragraphs": true,
+    "strong_opening_required": true,
+    "allow_opinions": true,
+    "require_specificity": true
+  },
+  "structure": {
+    "max_opening_sentences": 2,
+    "prefer_line_breaks": true,
+    "end_with_discussion_question_optional": true
+  },
+  "experience_policy": {
+    "never_invent_personal_experience": true,
+    "source_of_truth": "knowledge/user_memory.json",
+    "fallback_phrases": [
+      "One interesting pattern I noticed",
+      "Recent research suggests",
+      "After analyzing"
+    ]
+  },
+  "quality_checks": [
+    "banned_patterns",
+    "fake_experience_claims",
+    "weak_hooks",
+    "generic_ai_tone"
+  ]
+}

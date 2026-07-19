@@ -1,0 +1,6 @@
+{
+  "tone": "technical founder",
+  "first_person": true,
+  "sentence_style": "short and clear",
+  "notes": "Optional compact overrides; user_memory.json remains canonical for experiences."
+}

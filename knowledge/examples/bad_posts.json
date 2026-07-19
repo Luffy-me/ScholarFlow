@@ -1,0 +1,24 @@
+{
+  "posts": [
+    {
+      "id": "bad_generic_ai",
+      "text": "In today's rapidly evolving world, artificial intelligence is revolutionizing the technology landscape. It is important to note that the future of work depends on seamless integration of cutting-edge solutions.",
+      "traits": ["generic_ai", "corporate_language", "empty_statements"]
+    },
+    {
+      "id": "bad_fake_expertise",
+      "text": "I built a million-user product and tested this with thousands of customers. I discovered during my research that AI always drives exponential growth.",
+      "traits": ["fake_expertise", "unsupported_claims"]
+    },
+    {
+      "id": "bad_motivational",
+      "text": "Success is a journey. Unlock your potential. At the end of the day, hustle and mindset change everything. You've got this!",
+      "traits": ["motivational_filler", "empty_statements", "weak_hook"]
+    },
+    {
+      "id": "bad_corporate",
+      "text": "Our organization leverages synergies to deliver a robust framework and a multifaceted approach to digital transformation initiatives.",
+      "traits": ["corporate_language", "generic_ai"]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "phrases": [
+    "In today's rapidly evolving world",
+    "Artificial intelligence is revolutionizing",
+    "It is important to note",
+    "The future of",
+    "In the ever-changing landscape",
+    "At the end of the day",
+    "Unlock your potential",
+    "Game changer",
+    "Dive deep",
+    "Let's unpack",
+    "In this article",
+    "Without further ado",
+    "Cutting-edge solutions",
+    "Leverage synergies",
+    "Delve into",
+    "Multifaceted approach",
+    "Robust framework",
+    "Seamless integration"
+  ],
+  "weak_hooks": [
+    "Artificial intelligence is transforming",
+    "In today's world",
+    "Many people think",
+    "Have you ever wondered",
+    "Success is a journey",
+    "Here are some tips"
+  ],
+  "fake_experience_patterns": [
+    "I built a million-user",
+    "I tested this with thousands",
+    "I scaled to millions",
+    "my Fortune 500 clients",
+    "I raised \\$[0-9]+[MmBb]",
+    "I discovered during my research that"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "background": [
+    "AI projects",
+    "Computer Science",
+    "Economics"
+  ],
+  "skills": [
+    "Python",
+    "machine learning",
+    "RAG systems",
+    "local AI tooling"
+  ],
+  "projects": [
+    "RAG chatbot",
+    "LinkedIn Content Intelligence Engine"
+  ],
+  "experiences": [
+    "Built and iterated on local RAG prototypes",
+    "Compared local LLM workflows with cloud APIs for content drafting"
+  ],
+  "preferred_topics": [
+    "local-first AI",
+    "content authenticity",
+    "practical ML systems"
+  ],
+  "style": {
+    "first_person": true,
+    "tone": "technical founder",
+    "sentence_style": "short and clear"
+  },
+  "vocabulary_preferences": [
+    "concrete",
+    "specific",
+    "plain language"
+  ],
+  "content_preferences": [
+    "lessons from building",
+    "tradeoffs",
+    "evidence over slogans"
+  ]
+}

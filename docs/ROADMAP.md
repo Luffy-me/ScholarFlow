@@ -76,8 +76,30 @@ Supporting layers:
 | Agents (stubs) | trend_analyzer, researcher, strategist, designer |
 | API | health, AI status, modes, generate, save/list posts, memory, evidence, engagement feedback |
 | DB | users, writing_profiles, posts, generated_content, feedback, research_sources, engagement_feedback |
-| Tests | provider fake, memory gate, modes, critic vs examples, engagement schema, evidence, feedback API |
+| Tests | AI evaluation suite + provider fake, memory gate, modes, evidence, feedback API |
 | Docs | README + local runbook (API-first) |
+
+### AI evaluation tests (required)
+
+```text
+tests/
+├── test_writer.py
+├── test_humanizer.py
+├── test_critic.py
+└── test_engagement_predictor.py
+```
+
+These tests must verify:
+
+| Assertion | Covered by |
+|---|---|
+| Generic AI writing is detected | `test_critic.py`, `test_engagement_predictor.py` |
+| Fake personal experiences are rejected | `test_writer.py`, `test_critic.py` |
+| First-person authentic writing is preferred | `test_writer.py`, `test_humanizer.py` |
+| Weak hooks are identified | `test_critic.py`, `test_engagement_predictor.py` |
+| Engagement scoring returns structured output | `test_engagement_predictor.py` |
+
+Tests use `FakeProvider` and deterministic rule helpers — they must not require a live Ollama instance.
 
 ### Explicitly out of scope (Phase 1)
 
@@ -93,6 +115,7 @@ Supporting layers:
 
 ### Exit criteria
 
+- [x] AI evaluation suite exists and passes with FakeProvider.
 - API (or CLI) can run: topic + mode → write → humanize → critique → engagement predict → save.
 - Critic returns scores and uses good/bad examples as references.
 - Engagement predictor returns required JSON (`problems`, `improvements`, dimension scores).
