@@ -9,9 +9,9 @@ This is **not** a generic AI text generator.
 The product behaves like a **content intelligence system**:
 
 ```text
-Research (DeepSeek) → Trend Analysis → Insight Engine (DeepSeek) →
-Angle Finder → Strategize → Write (Qwen) → Debate (Qwen↔DeepSeek) →
-Claim Check → Writing Quality → Humanize (Qwen) → Critique (DeepSeek) → Predict → Export
+Research Intelligence → Insight → Opportunity → Angle → Strategy →
+Write → Debate → Claim Check → Writing Quality → Humanize →
+Critique → Predict → Quality Score → Rewrite Loop → Export
 ```
 
 Concrete behaviors:

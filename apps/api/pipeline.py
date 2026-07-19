@@ -1,8 +1,8 @@
-"""Pipeline orchestrator with DeepSeek reasoning + Qwen writing.
+"""Content Intelligence pipeline (local-first, capability-routed).
 
-Research → Trend Analysis → Insight Engine → Angle Finder → Strategist →
-Writer → (Debate Mode) → Claim Checker → AI Writing Quality Analyzer →
-Humanizer → Critic → Engagement Predictor
+Research Intelligence → Trend Analysis → Insight Engine → Angle Finder →
+Strategist → Writer → Debate → Claim Checker → AI Writing Analyzer →
+Humanizer → Critic → Engagement Predictor → Quality Score → Rewrite Loop
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ import uuid
 from typing import Any
 
 from agents.angle_finder import AngleFinderAgent, AngleFinderInput
+from agents.content_opportunity import ContentOpportunityEngine
 from agents.critic import CriticAgent, CriticInput
 from agents.debate import DebateMode
 from agents.engagement_predictor import EngagementPredictorAgent, EngagementPredictorInput
@@ -18,14 +19,16 @@ from agents.grounding import ClaimCheckerAgent, GroundingInput, check_claims
 from agents.humanizer import HumanizerAgent, HumanizerInput
 from agents.insight_engine import InsightEngineAgent, InsightEngineInput
 from agents.memory_builder import approved_experience_texts, normalize_memory
-from agents.researcher import ResearcherAgent, ResearcherInput
+from agents.quality import QualityScorer, RewriteLoop
+from agents.research import ResearchOrchestrator, ResearchOrchestratorInput
 from agents.strategist import StrategistAgent, StrategistInput
 from agents.trend_analyzer import TrendAnalyzerAgent, TrendAnalyzerInput
 from agents.writer import WriterAgent, WriterInput
 from agents.writing_quality import WritingQualityAnalyzer, WritingQualityInput
 from apps.api.config import settings
-from apps.api.providers import provider_for_stage
+from knowledge_graph import KnowledgeGraph
 from models.base import ModelProvider
+from models.orchestrator import ModelOrchestrator
 from models.router import RouterCallRecorder
 from shared.knowledge import load_user_memory
 
@@ -41,18 +44,21 @@ async def run_generation_pipeline(
     fake: bool = False,
     selected_angle_index: int = 0,
     debate_mode: bool | None = None,
+    rewrite_loop: bool = True,
+    quality_threshold: int = 90,
 ) -> dict[str, Any]:
     memory = normalize_memory(user_memory or load_user_memory())
     pipeline_run_id = uuid.uuid4()
     recorder = RouterCallRecorder()
+    orchestrator = ModelOrchestrator(fake=fake, recorder=recorder)
     use_debate = settings.debate_mode if debate_mode is None else debate_mode
 
     def stage_provider(stage: str) -> ModelProvider:
         if provider is not None:
             return provider
-        return provider_for_stage(stage, fake=fake, recorder=recorder)
+        return orchestrator.provider_for_stage(stage)
 
-    researcher = ResearcherAgent(stage_provider("researcher"))
+    research_intel = ResearchOrchestrator()
     trend_analyzer = TrendAnalyzerAgent(stage_provider("trend_analyzer"))
     insight_engine = InsightEngineAgent(stage_provider("insight_engine"))
     angle_finder = AngleFinderAgent(stage_provider("angle_finder"))
@@ -63,14 +69,39 @@ async def run_generation_pipeline(
     humanizer = HumanizerAgent(stage_provider("humanizer"))
     critic = CriticAgent(stage_provider("critic"))
     predictor = EngagementPredictorAgent(stage_provider("predictor"))
+    opportunity_engine = ContentOpportunityEngine()
+    graph = KnowledgeGraph()
 
-    research = await researcher.run(
-        ResearcherInput(
+    research_out = await research_intel.run(
+        ResearchOrchestratorInput(
             topic=topic,
             content_mode=content_mode,
             user_memory=memory,
             extra={"audience": audience} if audience else {},
         )
+    )
+    research_data = research_out.data
+    # Compatibility fields expected by later stages.
+    research_data.setdefault("key_findings", [
+        e.get("claim") for e in research_data.get("evidence", []) if e.get("claim")
+    ][:5])
+    research_data.setdefault("sources", [
+        {"title": s.get("title"), "url": s.get("url"), "tier": s.get("tier")}
+        for s in research_data.get("sources", [])
+    ])
+    research_data.setdefault("open_questions", research_data.get("open_questions") or [])
+    research_data["status"] = "ok"
+
+    # Knowledge graph: topic supported by top source concepts.
+    graph.link_topic_to_sources(
+        topic,
+        [s.get("title", "")[:80] for s in research_data.get("sources", [])[:5] if s.get("title")],
+    )
+
+    opportunity = opportunity_engine.score_topic(
+        topic,
+        brief=research_out.brief,
+        audience=audience or "builders",
     )
 
     trends = await trend_analyzer.run(
@@ -80,10 +111,16 @@ async def run_generation_pipeline(
             user_memory=memory,
             extra={
                 "audience": audience,
-                "research": research.data,
+                "research": research_data,
             },
         )
     )
+    # Merge research-intel trend signals when available.
+    if research_out.brief and research_out.brief.trends:
+        trends.data = {
+            **trends.data,
+            "intel_trends": [t.model_dump() for t in research_out.brief.trends],
+        }
 
     insight_out = await insight_engine.run(
         InsightEngineInput(
@@ -92,7 +129,7 @@ async def run_generation_pipeline(
             user_memory=memory,
             extra={
                 "audience": audience,
-                "research": research.data,
+                "research": research_data,
                 "trends": trends.data,
                 "verified_experiences": approved_experience_texts(memory),
             },
@@ -109,7 +146,8 @@ async def run_generation_pipeline(
                 "audience": audience,
                 "insight": insight,
                 "trends": trends.data,
-                "research": research.data,
+                "research": research_data,
+                "opportunity": opportunity.model_dump(),
             },
         )
     )
@@ -127,7 +165,7 @@ async def run_generation_pipeline(
             extra={
                 "audience": audience,
                 "angle": selected_angle,
-                "research": research.data,
+                "research": research_data,
                 "insight": insight,
                 "trends": trends.data,
             },
@@ -139,6 +177,9 @@ async def run_generation_pipeline(
         "angle": selected_angle,
         "strategy": strategy.data,
         "insight": insight,
+        "evidence_claims": [
+            c for c in research_data.get("evidence", []) if c.get("verified") or c.get("supporting_sources")
+        ],
     }
     written = await writer.run(
         WriterInput(
@@ -231,6 +272,50 @@ async def run_generation_pipeline(
         EngagementPredictorInput(text=final_text, user_memory=memory)
     )
 
+    scorer = QualityScorer()
+    quality_score = scorer.score(
+        final_text,
+        user_memory=memory,
+        safe=safe,
+        engagement_overall=int(predicted.scores.overall_score),
+        insight_originality=int(insight.get("originality_score") or 0),
+    )
+
+    rewrite_payload: dict[str, Any] | None = None
+    if rewrite_loop and quality_score.overall < quality_threshold:
+        loop = RewriteLoop(threshold=quality_threshold, max_iterations=3)
+
+        async def _rewrite(text: str, improvements: list[str]) -> str:
+            result = await humanizer.run(
+                HumanizerInput(
+                    text=text,
+                    topic=topic,
+                    user_memory=memory,
+                    extra={"improvements": improvements},
+                )
+            )
+            grounded_rewrite = await claim_checker.run(
+                GroundingInput(text=result.text, user_memory=memory, topic=topic)
+            )
+            return grounded_rewrite.text or result.text
+
+        rewrite_payload = await loop.run(
+            final_text,
+            rewrite=_rewrite,
+            user_memory=memory,
+            safe=safe,
+            engagement_overall=int(predicted.scores.overall_score),
+            insight_originality=int(insight.get("originality_score") or 0),
+        )
+        final_text = rewrite_payload["text"]
+        quality_score = scorer.score(
+            final_text,
+            user_memory=memory,
+            safe=check_claims(final_text, memory).safe,
+            engagement_overall=int(predicted.scores.overall_score),
+            insight_originality=int(insight.get("originality_score") or 0),
+        )
+
     status = "reviewed" if approval_allowed else "unsafe"
     if debate_payload and debate_payload.get("generic_rejected"):
         status = "rejected_generic"
@@ -241,7 +326,8 @@ async def run_generation_pipeline(
         "content_mode": content_mode,
         "format": format,
         "audience": audience,
-        "research": research.data,
+        "research": research_data,
+        "content_opportunity": opportunity.model_dump(),
         "trends": trends.data,
         "insight": insight_out.as_report(),
         "angles": angles,
@@ -254,10 +340,13 @@ async def run_generation_pipeline(
         "safe": safe,
         "approval_allowed": approval_allowed,
         "status": status,
+        "quality_score": quality_score.as_dict(),
+        "rewrite_loop": rewrite_payload,
         "model_routing": {
             "calls": list(recorder.calls),
             "deepseek_stages": recorder.stages_for_family("deepseek"),
             "qwen_stages": recorder.stages_for_family("qwen"),
+            "orchestrator_decisions": orchestrator.decision_log(),
         },
         "grounding": {
             "approved_claims": [c.model_dump() for c in final_check.approved_claims],
@@ -272,7 +361,7 @@ async def run_generation_pipeline(
         },
         "engagement_prediction": predicted.scores.model_dump(),
         "stages": {
-            "researcher": research.model_dump(),
+            "research_intelligence": research_out.model_dump(),
             "trend_analyzer": trends.model_dump(),
             "insight_engine": insight_out.model_dump(),
             "angle_finder": angles_out.model_dump(),
@@ -286,5 +375,7 @@ async def run_generation_pipeline(
             "final_writing_quality": final_quality.model_dump(),
             "critic": critiqued.model_dump(),
             "engagement_predictor": predicted.model_dump(),
+            "quality_score": quality_score.as_dict(),
+            "rewrite_loop": rewrite_payload,
         },
     }

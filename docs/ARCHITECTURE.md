@@ -9,11 +9,13 @@ This is a **content intelligence system**, not a single-prompt text generator.
 Full product pipeline:
 
 ```text
-Research (DeepSeek) → Trend Analysis (DeepSeek) → Insight Engine (DeepSeek) →
-Angle Finder → Strategist → Writer (Qwen) → Debate Mode (Qwen↔DeepSeek) →
-Claim Checker → AI Writing Quality Analyzer → Humanizer (Qwen) →
-Critic (DeepSeek) → Engagement Predictor (DeepSeek) → Export
+Research Intelligence → Trend Analysis → Insight Engine → Opportunity Score →
+Angle Finder → Strategist → Writer → Debate Mode → Claim Checker →
+AI Writing Quality Analyzer → Humanizer → Critic → Engagement Predictor →
+Quality Score → Rewrite Loop (≤3) → Export
 ```
+
+Capability routing (not hardcoded models): DeepSeek for reasoning/critique/extraction/ranking; Qwen for writing/summarization. See [MODEL_ROUTING.md](./MODEL_ROUTING.md) and [INTELLIGENCE_V3.md](./INTELLIGENCE_V3.md).
 
 ```
 linkedin-content-engine/

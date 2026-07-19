@@ -250,6 +250,25 @@ See [DEEPSEEK_REASONING.md](./DEEPSEEK_REASONING.md).
 
 ---
 
+## Phase 1.11 — Content Intelligence Platform (V3)
+
+**Status:** implemented (engine-only, no UI)
+
+### Scope
+
+1. Research Intelligence (`agents/research/*`) + offline connectors (`connectors/*`)
+2. Capability-based model orchestrator (`models/capabilities.py`, `models/orchestrator.py`)
+3. Evidence graph (`knowledge/evidence/`)
+4. Knowledge graph (`knowledge_graph/`)
+5. Content Opportunity Engine (`agents/content_opportunity/`)
+6. Unified quality score + rewrite loop (max 3, threshold 90)
+7. Learning engine (recommendations only; never auto-edits prompts)
+8. Docs: `INTELLIGENCE_V3.md`, `RESEARCH_PIPELINE.md`, `MODEL_ROUTING.md`, `KNOWLEDGE_GRAPH.md`
+
+Local-first: works offline; external APIs optional and hot-registerable.
+
+---
+
 ## Phase 2 — Simple Web Interface
 
 ### Scope

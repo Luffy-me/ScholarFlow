@@ -22,4 +22,12 @@ def __getattr__(name: str):
         from models import router as _router
 
         return getattr(_router, name)
+    if name in {"Capability", "CAPABILITY_FAMILY_PREFERENCE", "STAGE_CAPABILITIES"}:
+        from models import capabilities as _capabilities
+
+        return getattr(_capabilities, name)
+    if name in {"ModelOrchestrator", "ProviderSelection"}:
+        from models import orchestrator as _orchestrator
+
+        return getattr(_orchestrator, name)
     raise AttributeError(f"module 'models' has no attribute {name!r}")
