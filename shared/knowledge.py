@@ -51,13 +51,14 @@ def load_bad_posts() -> dict[str, Any]:
 
 
 def allowed_experience_texts(memory: dict[str, Any] | None = None) -> list[str]:
-    mem = memory or load_user_memory()
-    values: list[str] = []
-    for key in ("background", "skills", "projects", "experiences"):
-        items = mem.get(key, [])
-        if isinstance(items, list):
-            values.extend(str(item) for item in items)
-    return values
+    """Return only reusable, approved experience texts for generation/grounding.
+
+    Prefers verified_experiences from the Verified Experience Memory System.
+    Unapproved/pending experiences are never included.
+    """
+    from agents.memory_builder import approved_experience_texts
+
+    return approved_experience_texts(memory)
 
 
 def clear_knowledge_cache() -> None:

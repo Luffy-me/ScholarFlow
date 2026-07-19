@@ -167,6 +167,22 @@ See [TRUTH_LAYER_V2.md](./TRUTH_LAYER_V2.md).
 
 ---
 
+## Phase 1.7 — Verified Memory + Angle Intelligence
+
+**Status:** implemented
+
+### Scope
+
+1. Verified Experience Memory System (`agents/memory_builder/`)
+2. Updated `knowledge/user_memory.json` schema (v2)
+3. Content Angle Agent (`agents/angle_finder/`)
+4. Pipeline: Research → Angle Finder → Strategist → Writer → Claim Checker → Humanizer → Critic → Engagement Predictor
+5. Tests for approved/unapproved memory reuse and multi-angle generation
+
+See [MEMORY_AND_ANGLES.md](./MEMORY_AND_ANGLES.md).
+
+---
+
 ## Phase 2 — Simple Web Interface
 
 ### Scope

@@ -10,7 +10,21 @@ class GenerateRequest(BaseModel):
     content_mode: str = "founder"
     format: str = "short"
     audience: str = ""
+    selected_angle_index: int = 0
     save: bool = True
+
+
+class ExperiencePropose(BaseModel):
+    statement: str
+    category: str = "other"
+    tags: list[str] = Field(default_factory=list)
+    related_projects: list[str] = Field(default_factory=list)
+    persist: bool = True
+
+
+class ExperienceDecision(BaseModel):
+    experience_id: str
+    persist: bool = True
 
 
 class EvidenceCreate(BaseModel):

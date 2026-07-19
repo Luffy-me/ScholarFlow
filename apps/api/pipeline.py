@@ -1,6 +1,6 @@
-"""Pipeline orchestrator with Truth Layer v2 grounding.
+"""Pipeline orchestrator with verified memory + angle intelligence.
 
-Writer → Claim Checker → Humanizer → Critic → Engagement Predictor
+Research → Angle Finder → Strategist → Writer → Claim Checker → Humanizer → Critic → Engagement Predictor
 """
 
 from __future__ import annotations
@@ -8,10 +8,14 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from agents.angle_finder import AngleFinderAgent, AngleFinderInput
 from agents.critic import CriticAgent, CriticInput
 from agents.engagement_predictor import EngagementPredictorAgent, EngagementPredictorInput
 from agents.grounding import ClaimCheckerAgent, GroundingInput, check_claims
 from agents.humanizer import HumanizerAgent, HumanizerInput
+from agents.memory_builder import normalize_memory
+from agents.researcher import ResearcherAgent, ResearcherInput
+from agents.strategist import StrategistAgent, StrategistInput
 from agents.writer import WriterAgent, WriterInput
 from apps.api.providers import build_base_provider, provider_for_stage
 from models.base import ModelProvider
@@ -27,25 +31,60 @@ async def run_generation_pipeline(
     audience: str = "",
     user_memory: dict[str, Any] | None = None,
     fake: bool = False,
+    selected_angle_index: int = 0,
 ) -> dict[str, Any]:
-    memory = user_memory or load_user_memory()
+    memory = normalize_memory(user_memory or load_user_memory())
     pipeline_run_id = uuid.uuid4()
 
-    # Per-stage model routing (falls back to a shared provider when FakeProvider is used).
-    writer_provider = provider_for_stage("writer", fake=fake) if provider is None else provider
-    humanizer_provider = provider_for_stage("humanizer", fake=fake) if provider is None else provider
-    critic_provider = provider_for_stage("critic", fake=fake) if provider is None else provider
-    predictor_provider = provider_for_stage("predictor", fake=fake) if provider is None else provider
+    def stage_provider(stage: str) -> ModelProvider:
+        if provider is not None:
+            return provider
+        return provider_for_stage(stage, fake=fake)
 
-    # If caller passed an explicit provider (tests), use it for all LLM stages.
-    if provider is not None:
-        writer_provider = humanizer_provider = critic_provider = predictor_provider = provider
-
-    writer = WriterAgent(writer_provider)
+    researcher = ResearcherAgent(stage_provider("researcher"))
+    angle_finder = AngleFinderAgent(stage_provider("angle_finder"))
+    strategist = StrategistAgent(stage_provider("strategist"))
+    writer = WriterAgent(stage_provider("writer"))
     claim_checker = ClaimCheckerAgent(build_base_provider(fake=True))
-    humanizer = HumanizerAgent(humanizer_provider)
-    critic = CriticAgent(critic_provider)
-    predictor = EngagementPredictorAgent(predictor_provider)
+    humanizer = HumanizerAgent(stage_provider("humanizer"))
+    critic = CriticAgent(stage_provider("critic"))
+    predictor = EngagementPredictorAgent(stage_provider("predictor"))
+
+    research = await researcher.run(
+        ResearcherInput(
+            topic=topic,
+            content_mode=content_mode,
+            user_memory=memory,
+            extra={"audience": audience} if audience else {},
+        )
+    )
+
+    angles_out = await angle_finder.run(
+        AngleFinderInput(
+            topic=topic,
+            content_mode=content_mode,
+            user_memory=memory,
+            extra={"audience": audience} if audience else {},
+        )
+    )
+    angles = [a.model_dump() for a in angles_out.angles]
+    if not angles:
+        raise RuntimeError("Angle finder returned no angles")
+    idx = max(0, min(selected_angle_index, len(angles) - 1))
+    selected_angle = angles[idx]
+
+    strategy = await strategist.run(
+        StrategistInput(
+            topic=topic,
+            content_mode=content_mode,
+            user_memory=memory,
+            extra={
+                "audience": audience,
+                "angle": selected_angle,
+                "research": research.data,
+            },
+        )
+    )
 
     written = await writer.run(
         WriterInput(
@@ -53,11 +92,14 @@ async def run_generation_pipeline(
             content_mode=content_mode,
             format=format,
             user_memory=memory,
-            extra={"audience": audience} if audience else {},
+            extra={
+                "audience": audience,
+                "angle": selected_angle,
+                "strategy": strategy.data,
+            },
         )
     )
 
-    # Truth Layer v2 — sanitize ungrounded first-person claims before humanizing.
     grounded = await claim_checker.run(
         GroundingInput(text=written.text, user_memory=memory, topic=topic)
     )
@@ -66,11 +108,9 @@ async def run_generation_pipeline(
         HumanizerInput(text=grounded.text or written.text, user_memory=memory, topic=topic)
     )
 
-    # Re-check after humanizer (must not re-introduce unsupported claims).
     final_grounding = await claim_checker.run(
         GroundingInput(text=humanized.text, user_memory=memory, topic=topic)
     )
-    # If humanizer reintroduced claims, keep sanitized version.
     final_text = final_grounding.text if final_grounding.safe or final_grounding.text else humanized.text
     if not final_grounding.safe and final_grounding.text:
         final_text = final_grounding.text
@@ -95,6 +135,10 @@ async def run_generation_pipeline(
         "content_mode": content_mode,
         "format": format,
         "audience": audience,
+        "research": research.data,
+        "angles": angles,
+        "selected_angle": selected_angle,
+        "strategy": strategy.data,
         "draft": written.text,
         "grounded_draft": grounded.text,
         "final_text": final_text,
@@ -113,6 +157,9 @@ async def run_generation_pipeline(
         },
         "engagement_prediction": predicted.scores.model_dump(),
         "stages": {
+            "researcher": research.model_dump(),
+            "angle_finder": angles_out.model_dump(),
+            "strategist": strategy.model_dump(),
             "writer": written.model_dump(),
             "claim_checker": grounded.model_dump(),
             "humanizer": humanized.model_dump(),

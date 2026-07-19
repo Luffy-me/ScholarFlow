@@ -42,6 +42,18 @@ def _print_report(result: dict[str, Any]) -> None:
     print(f"Approval:     {result.get('approval_allowed')}")
     print(f"Status:       {result.get('status')}")
     print("-" * 72)
+    print("ANGLES")
+    print("-" * 72)
+    for i, angle in enumerate(result.get("angles") or []):
+        marker = "->" if angle == result.get("selected_angle") else "  "
+        print(f"{marker} [{i}] {angle.get('type')}: {angle.get('hook')}")
+    print()
+    print("-" * 72)
+    print("STRATEGY")
+    print("-" * 72)
+    print(json.dumps(result.get("strategy") or {}, indent=2)[:2000])
+    print()
+    print("-" * 72)
     print("GENERATED POST (writer draft)")
     print("-" * 72)
     print(result.get("draft", "").strip())

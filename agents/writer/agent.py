@@ -36,24 +36,32 @@ class WriterAgent(Agent[WriterInput, WriterOutput]):
             "You are a LinkedIn writing partner for authentic thought leadership.\n"
             "Write in first person when appropriate.\n"
             "Never invent personal experiences.\n"
-            "Only use lived experiences from the allowed list.\n"
+            "Only use VERIFIED/APPROVED experiences from the allowed list.\n"
+            "Never use pending or unapproved experiences.\n"
             "Avoid corporate AI phrases and weak generic openings.\n"
             "Short paragraphs. Specific examples. Clear opinion.\n"
             f"Content mode: {mode_key} — {mode.get('label')}. Tone: {mode.get('tone')}.\n"
             f"Opening guidance: {mode.get('opening_guidance')}\n"
             f"Emphasis: {', '.join(mode.get('emphasis', []))}\n"
             f"Avoid: {', '.join(mode.get('avoid', []))}\n"
-            f"Allowed experiences: {allowed}\n"
+            f"Allowed verified experiences: {allowed}\n"
             f"Fallback phrases if no personal experience fits: "
             f"{rules.get('experience_policy', {}).get('fallback_phrases', [])}"
         )
+        extra = payload.extra or {}
+        audience = str(extra.get("audience") or "").strip()
+        angle = extra.get("angle") or {}
+        strategy = extra.get("strategy") or {}
         user = (
             f"Topic: {payload.topic}\n"
             f"Format: {payload.format}\n"
         )
-        audience = str((payload.extra or {}).get("audience") or "").strip()
         if audience:
             user += f"Audience: {audience}\n"
+        if angle:
+            user += f"Selected angle: {angle}\n"
+        if strategy:
+            user += f"Strategy: {strategy}\n"
         user += "Write a LinkedIn post draft now."
 
         result = await self.provider.generate(

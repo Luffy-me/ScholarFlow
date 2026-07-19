@@ -31,6 +31,50 @@ class FakeProvider(ModelProvider):
         key = self._match_key(blob)
         if key and key in self.scripted:
             text = self.scripted[key]
+        elif "JSON" in blob.upper() and ("key_findings" in blob.lower() or "research briefing" in blob.lower() or "Produce a brief research" in blob):
+            text = json.dumps(
+                {
+                    "topic": "local AI",
+                    "key_findings": ["Evaluation loops matter more than model size", "Specific systems beat slogans"],
+                    "sources": [],
+                    "open_questions": ["What constraint limits your workflow?"],
+                }
+            )
+        elif "JSON" in blob.upper() and ("discussion_question" in blob.lower() or "content strategist" in blob.lower() or "Produce strategy" in blob):
+            text = json.dumps(
+                {
+                    "audience": "builders",
+                    "hook": "Most advice optimizes for noise.",
+                    "opinion": "Specific systems beat generic advice.",
+                    "structure": "hook → observation → lesson → question",
+                    "discussion_question": "What constraint are you accepting?",
+                }
+            )
+        elif "JSON" in blob.upper() and "angles" in blob.lower():
+            text = json.dumps(
+                {
+                    "angles": [
+                        {
+                            "type": "contrarian_lesson",
+                            "hook": "Most advice optimizes for noise. Here's the constraint I care about.",
+                            "reason": "Contrarian framing creates curiosity.",
+                            "target_audience": "builders",
+                        },
+                        {
+                            "type": "tradeoff",
+                            "hook": "The useful question isn't what's trending — it's which tradeoff you accept.",
+                            "reason": "Tradeoffs create discussion.",
+                            "target_audience": "operators",
+                        },
+                        {
+                            "type": "implementation_lesson",
+                            "hook": "If I had to explain this in one operational lesson, it would be this.",
+                            "reason": "Forces a specific takeaway.",
+                            "target_audience": "engineers",
+                        },
+                    ]
+                }
+            )
         elif "JSON" in blob.upper() and "overall_score" in blob:
             text = json.dumps(
                 {

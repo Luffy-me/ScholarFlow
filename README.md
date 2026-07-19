@@ -82,6 +82,8 @@ Environment:
 
 Truth Layer v2 docs: [docs/TRUTH_LAYER_V2.md](docs/TRUTH_LAYER_V2.md)
 
+Verified memory + angles: [docs/MEMORY_AND_ANGLES.md](docs/MEMORY_AND_ANGLES.md)
+
 ## AI evaluation tests
 
 ```bash

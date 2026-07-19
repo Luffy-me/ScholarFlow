@@ -15,6 +15,8 @@ from apps.api.pipeline import run_generation_pipeline
 from apps.api.schemas.api import (
     EngagementFeedbackCreate,
     EvidenceCreate,
+    ExperienceDecision,
+    ExperiencePropose,
     GenerateRequest,
     MemoryUpdate,
     PostUpdate,
@@ -114,7 +116,9 @@ def list_modes() -> dict[str, Any]:
 
 @app.get("/api/v1/memory")
 def get_memory() -> dict[str, Any]:
-    return load_user_memory()
+    from agents.memory_builder import normalize_memory
+
+    return normalize_memory(load_user_memory())
 
 
 @app.put("/api/v1/memory")
@@ -125,6 +129,94 @@ def put_memory(payload: MemoryUpdate) -> dict[str, Any]:
 
     clear_knowledge_cache()
     return payload.memory
+
+
+@app.get("/api/v1/memory/verified")
+def get_verified_experiences() -> dict[str, Any]:
+    from agents.memory_builder import list_verified_experiences, normalize_memory
+
+    memory = normalize_memory(load_user_memory())
+    return {"verified_experiences": list_verified_experiences(memory)}
+
+
+@app.get("/api/v1/memory/pending")
+def get_pending_experiences() -> dict[str, Any]:
+    from agents.memory_builder import list_pending_experiences, normalize_memory
+
+    memory = normalize_memory(load_user_memory())
+    return {"pending_experiences": list_pending_experiences(memory)}
+
+
+@app.post("/api/v1/memory/experiences/propose")
+async def propose_memory_experience(payload: ExperiencePropose) -> dict[str, Any]:
+    from agents.memory_builder import MemoryBuilderAgent, MemoryBuilderInput
+
+    agent = MemoryBuilderAgent()
+    try:
+        result = await agent.run(
+            MemoryBuilderInput(
+                action="propose",
+                statement=payload.statement,
+                category=payload.category,  # type: ignore[arg-type]
+                tags=payload.tags,
+                related_projects=payload.related_projects,
+                persist=payload.persist,
+                user_memory=load_user_memory(),
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "changed": result.changed,
+        "pending_experiences": result.pending,
+        "verified_experiences": result.verified,
+    }
+
+
+@app.post("/api/v1/memory/experiences/approve")
+async def approve_memory_experience(payload: ExperienceDecision) -> dict[str, Any]:
+    from agents.memory_builder import MemoryBuilderAgent, MemoryBuilderInput
+
+    agent = MemoryBuilderAgent()
+    try:
+        result = await agent.run(
+            MemoryBuilderInput(
+                action="approve",
+                experience_id=payload.experience_id,
+                persist=payload.persist,
+                user_memory=load_user_memory(),
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "changed": result.changed,
+        "pending_experiences": result.pending,
+        "verified_experiences": result.verified,
+    }
+
+
+@app.post("/api/v1/memory/experiences/reject")
+async def reject_memory_experience(payload: ExperienceDecision) -> dict[str, Any]:
+    from agents.memory_builder import MemoryBuilderAgent, MemoryBuilderInput
+
+    agent = MemoryBuilderAgent()
+    try:
+        result = await agent.run(
+            MemoryBuilderInput(
+                action="reject",
+                experience_id=payload.experience_id,
+                persist=payload.persist,
+                user_memory=load_user_memory(),
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {
+        "changed": result.changed,
+        "pending_experiences": result.pending,
+        "verified_experiences": result.verified,
+    }
 
 
 @app.post("/api/v1/generate")
@@ -141,6 +233,7 @@ async def generate(payload: GenerateRequest, session: Session = Depends(get_sess
         format=payload.format,
         audience=payload.audience,
         fake=settings.use_fake_provider,
+        selected_angle_index=payload.selected_angle_index,
     )
 
     if payload.save:

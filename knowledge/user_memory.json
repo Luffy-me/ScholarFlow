@@ -1,4 +1,5 @@
 {
+  "schema_version": "2.0",
   "background": [
     "AI projects",
     "Computer Science",
@@ -18,6 +19,42 @@
     "Built and iterated on local RAG prototypes",
     "Compared local LLM workflows with cloud APIs for content drafting"
   ],
+  "verified_experiences": [
+    {
+      "id": "exp_rag_prototypes",
+      "statement": "Built and iterated on local RAG prototypes",
+      "category": "project",
+      "source": "user_provided",
+      "approved": true,
+      "approved_at": "2026-07-19T00:00:00+00:00",
+      "tags": ["RAG", "local AI"],
+      "reusable": true,
+      "related_projects": ["RAG chatbot"]
+    },
+    {
+      "id": "exp_local_vs_cloud",
+      "statement": "Compared local LLM workflows with cloud APIs for content drafting",
+      "category": "experiment",
+      "source": "user_provided",
+      "approved": true,
+      "approved_at": "2026-07-19T00:00:00+00:00",
+      "tags": ["local AI", "evaluation"],
+      "reusable": true,
+      "related_projects": ["LinkedIn Content Intelligence Engine"]
+    },
+    {
+      "id": "exp_rag_chatbot_project",
+      "statement": "Built a RAG chatbot",
+      "category": "project",
+      "source": "user_provided",
+      "approved": true,
+      "approved_at": "2026-07-19T00:00:00+00:00",
+      "tags": ["RAG", "chatbot"],
+      "reusable": true,
+      "related_projects": ["RAG chatbot"]
+    }
+  ],
+  "pending_experiences": [],
   "preferred_topics": [
     "local-first AI",
     "content authenticity",
@@ -37,5 +74,10 @@
     "lessons from building",
     "tradeoffs",
     "evidence over slogans"
-  ]
+  ],
+  "memory_policy": {
+    "never_auto_create_experiences": true,
+    "only_user_approved_facts_reusable": true,
+    "unapproved_experiences_forbidden_in_generation": true
+  }
 }
