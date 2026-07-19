@@ -543,12 +543,13 @@ The **Engagement Predictor** may also use them as calibration hints for hook/spe
 
 ### Phase 2 screens (simple)
 
-1. Topic input
+1. Topic input + content mode select
 2. Generate button
-3. Results view (draft + critic + engagement scores)
+3. Results view (draft + critic + engagement scores + evidence)
 4. Edit content
 5. Save drafts
-6. Minimal settings (Ollama URL / model)
+6. Manual engagement feedback entry
+7. Minimal settings (Ollama URL / model / memory editor)
 
 ### Frontend responsibilities
 
