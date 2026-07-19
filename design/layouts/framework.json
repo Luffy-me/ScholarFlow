@@ -1,0 +1,32 @@
+{
+  "id": "framework",
+  "slots": [
+    "heading",
+    "steps",
+    "footer"
+  ],
+  "regions": {
+    "heading": {
+      "x": 64,
+      "y": 80,
+      "w": 952,
+      "h": 100
+    },
+    "steps": {
+      "x": 64,
+      "y": 220,
+      "w": 952,
+      "h": 980
+    },
+    "footer": {
+      "x": 64,
+      "y": 1260,
+      "w": 952,
+      "h": 40
+    }
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  }
+}

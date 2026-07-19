@@ -1,0 +1,27 @@
+{
+  "families": {
+    "display": "Inter Display",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "sizes": {
+    "display": 56,
+    "h1": 44,
+    "h2": 32,
+    "h3": 24,
+    "body": 20,
+    "caption": 14,
+    "footer": 12
+  },
+  "weights": {
+    "regular": 400,
+    "medium": 500,
+    "semibold": 600,
+    "bold": 700
+  },
+  "line_height": {
+    "tight": 1.15,
+    "normal": 1.35,
+    "relaxed": 1.5
+  }
+}

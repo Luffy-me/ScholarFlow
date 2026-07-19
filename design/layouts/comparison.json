@@ -1,0 +1,39 @@
+{
+  "id": "comparison",
+  "slots": [
+    "heading",
+    "left",
+    "right",
+    "footer"
+  ],
+  "regions": {
+    "heading": {
+      "x": 64,
+      "y": 80,
+      "w": 952,
+      "h": 100
+    },
+    "left": {
+      "x": 64,
+      "y": 220,
+      "w": 440,
+      "h": 980
+    },
+    "right": {
+      "x": 560,
+      "y": 220,
+      "w": 456,
+      "h": 980
+    },
+    "footer": {
+      "x": 64,
+      "y": 1260,
+      "w": 952,
+      "h": 40
+    }
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  }
+}

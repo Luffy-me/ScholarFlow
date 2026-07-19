@@ -1,0 +1,46 @@
+{
+  "id": "hero",
+  "slots": [
+    "eyebrow",
+    "heading",
+    "subheading",
+    "visual",
+    "footer"
+  ],
+  "regions": {
+    "eyebrow": {
+      "x": 64,
+      "y": 80,
+      "w": 952,
+      "h": 40
+    },
+    "heading": {
+      "x": 64,
+      "y": 160,
+      "w": 952,
+      "h": 220
+    },
+    "subheading": {
+      "x": 64,
+      "y": 420,
+      "w": 800,
+      "h": 120
+    },
+    "visual": {
+      "x": 64,
+      "y": 580,
+      "w": 952,
+      "h": 520
+    },
+    "footer": {
+      "x": 64,
+      "y": 1260,
+      "w": 952,
+      "h": 40
+    }
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  }
+}

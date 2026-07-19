@@ -1,0 +1,27 @@
+{
+  "libraries": [
+    "lucide",
+    "heroicons",
+    "material",
+    "phosphor",
+    "tabler"
+  ],
+  "default_library": "lucide",
+  "aliases": {
+    "hook": "sparkles",
+    "problem": "alert-triangle",
+    "research": "search",
+    "insight": "lightbulb",
+    "framework": "boxes",
+    "example": "beaker",
+    "mistakes": "x-circle",
+    "cta": "arrow-right",
+    "check": "check",
+    "timeline": "calendar",
+    "architecture": "network",
+    "comparison": "columns-2",
+    "roadmap": "map",
+    "metrics": "bar-chart-3",
+    "quote": "quote"
+  }
+}
