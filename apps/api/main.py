@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import uuid
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,10 @@ from typing import Any
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
+from apps.api.ai_status import build_ai_status_payload
 from apps.api.config import settings
+from apps.api.errors import register_exception_handlers
+from apps.api.ollama_probe import missing_models, probe_ollama, resolution_for_missing
 from apps.api.pipeline import run_generation_pipeline
 from apps.api.schemas.api import (
     EngagementFeedbackCreate,
@@ -32,13 +36,18 @@ from database.models import (
     WritingProfile,
 )
 from database.session import get_session, init_db
+from models.ollama import OllamaUnavailableError
 from shared.knowledge import load_content_modes, load_user_memory, repo_path
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="LinkedIn Content Intelligence Engine",
     version="0.1.0",
     description="Phase 1 AI core API — local-first content intelligence (no UI).",
 )
+
+register_exception_handlers(app)
 
 
 def get_provider():
@@ -87,8 +96,38 @@ def _ensure_local_user(session: Session) -> User:
 
 
 @app.on_event("startup")
-def on_startup() -> None:
+async def on_startup() -> None:
     init_db(settings.database_url)
+    if settings.use_fake_provider:
+        logger.info("ScholarFlow API started (USE_FAKE_PROVIDER=true — Ollama checks skipped)")
+        return
+
+    writer = settings.model_for_stage("writer")
+    critic = settings.model_for_stage("critic")
+    predictor = settings.model_for_stage("predictor")
+    probe = await probe_ollama(settings.ollama_base_url)
+    if not probe.reachable:
+        logger.warning(
+            "Ollama not reachable at %s — %s. %s",
+            settings.ollama_base_url,
+            probe.message,
+            probe.resolution,
+        )
+    else:
+        logger.info("Ollama reachable at %s (%d models)", settings.ollama_base_url, len(probe.installed_models))
+
+    for label, model in (
+        ("Writer", writer),
+        ("Critic", critic),
+        ("Predictor", predictor),
+    ):
+        if not probe.reachable:
+            logger.warning("  ? %s: %s (Ollama offline — could not verify)", label, model)
+            continue
+        if missing_models(probe.installed_models, [model]):
+            logger.warning("  ✗ %s: %s missing — %s", label, model, resolution_for_missing(model))
+        else:
+            logger.info("  ✓ %s: %s", label, model)
 
 
 @app.get("/health")
@@ -98,15 +137,31 @@ def health() -> dict[str, str]:
 
 @app.get("/api/v1/ai/status")
 async def ai_status() -> dict[str, Any]:
-    provider = get_provider()
-    status = await provider.health()
-    return {
-        "online": status.online,
-        "provider": status.provider,
-        "models": status.models,
-        "detail": status.detail,
-        "default_model": settings.default_model,
-    }
+    try:
+        return await build_ai_status_payload()
+    except Exception as exc:  # noqa: BLE001 — never 500 for status probe
+        logger.exception("AI status probe failed")
+        return {
+            "connected": False,
+            "online": False,
+            "provider": "ollama",
+            "writer": settings.model_for_stage("writer"),
+            "humanizer": settings.model_for_stage("humanizer"),
+            "critic": settings.model_for_stage("critic"),
+            "predictor": settings.model_for_stage("predictor"),
+            "models": [],
+            "installed_models": [],
+            "default_model": settings.default_model,
+            "detail": "Status probe failed.",
+            "missing_models": [],
+            "errors": [
+                {
+                    "error": "StatusProbeFailed",
+                    "message": str(exc) or "Could not determine AI status.",
+                    "resolution": "Check API logs and OLLAMA_BASE_URL.",
+                }
+            ],
+        }
 
 
 @app.get("/api/v1/modes")
@@ -226,15 +281,28 @@ async def generate(payload: GenerateRequest, session: Session = Depends(get_sess
         raise HTTPException(status_code=400, detail=f"Unknown content_mode: {payload.content_mode}")
 
     provider = get_provider()
-    result = await run_generation_pipeline(
-        provider,
-        topic=payload.topic,
-        content_mode=payload.content_mode,
-        format=payload.format,
-        audience=payload.audience,
-        fake=settings.use_fake_provider,
-        selected_angle_index=payload.selected_angle_index,
-    )
+    try:
+        result = await run_generation_pipeline(
+            provider,
+            topic=payload.topic,
+            content_mode=payload.content_mode,
+            format=payload.format,
+            audience=payload.audience,
+            fake=settings.use_fake_provider,
+            selected_angle_index=payload.selected_angle_index,
+        )
+    except OllamaUnavailableError:
+        raise
+    except Exception as exc:
+        logger.exception("Generation pipeline failed")
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "GenerationFailed",
+                "message": str(exc) or "Generation failed.",
+                "resolution": "Check Ollama status via GET /api/v1/ai/status.",
+            },
+        ) from exc
 
     if payload.save:
         user = _ensure_local_user(session)

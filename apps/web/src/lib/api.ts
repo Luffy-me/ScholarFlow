@@ -12,6 +12,20 @@ import type {
 
 const BASE = "/backend";
 
+export type ApiErrorBody = {
+  error?: string;
+  message?: string;
+  resolution?: string;
+};
+
+export function formatApiError(body: unknown, fallback: string): string {
+  if (!body || typeof body !== "object") return fallback;
+  const b = body as ApiErrorBody;
+  const parts = [b.message || b.error || fallback];
+  if (b.resolution) parts.push(b.resolution);
+  return parts.filter(Boolean).join(" — ");
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
@@ -25,7 +39,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let detail = res.statusText;
     try {
       const body = await res.json();
-      detail = typeof body?.detail === "string" ? body.detail : JSON.stringify(body?.detail ?? body);
+      if (typeof body?.detail === "string") {
+        detail = body.detail;
+      } else if (body?.detail && typeof body.detail === "object") {
+        detail = formatApiError(body.detail, detail);
+      } else {
+        detail = formatApiError(body, detail);
+      }
     } catch {
       /* ignore */
     }

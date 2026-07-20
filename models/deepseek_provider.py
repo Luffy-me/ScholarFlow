@@ -19,7 +19,7 @@ class DeepSeekProvider(ModelProvider):
 
     def __init__(
         self,
-        base_url: str = "http://localhost:11434",
+        base_url: str = "http://127.0.0.1:11434",
         default_model: str = DEEPSEEK_DEFAULT_MODEL,
         *,
         timeout_seconds: float = 300.0,
