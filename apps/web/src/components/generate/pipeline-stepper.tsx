@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Circle, Loader2 } from "lucide-react";
+import { Check, Circle, Loader2, XCircle } from "lucide-react";
 import type { PipelineStageState } from "@/types/api";
 import { cn, formatDuration } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ export function PipelineStepper({ stages }: { stages: PipelineStageState[] }) {
             "flex items-center justify-between rounded-xl border border-[var(--border)] px-3 py-2.5 text-sm",
             stage.status === "running" && "border-[var(--accent)] bg-[var(--accent-soft)]",
             stage.status === "completed" && "bg-[var(--card)]",
+            stage.status === "error" && "border-[var(--danger)]/40 bg-[var(--danger)]/5",
           )}
         >
           <div className="flex items-center gap-2">
@@ -21,6 +22,8 @@ export function PipelineStepper({ stages }: { stages: PipelineStageState[] }) {
               <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
             ) : stage.status === "completed" ? (
               <Check className="h-4 w-4 text-[var(--success)]" />
+            ) : stage.status === "error" ? (
+              <XCircle className="h-4 w-4 text-[var(--danger)]" />
             ) : (
               <Circle className="h-4 w-4 text-[var(--muted-foreground)]" />
             )}
@@ -33,7 +36,9 @@ export function PipelineStepper({ stages }: { stages: PipelineStageState[] }) {
                 ? "Running"
                 : stage.status === "skipped"
                   ? "Skipped"
-                  : "Pending"}
+                  : stage.status === "error"
+                    ? stage.detail || "Error"
+                    : "Pending"}
           </div>
         </li>
       ))}

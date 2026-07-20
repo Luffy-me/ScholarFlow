@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, FileText, Sparkles } from "lucide-react";
 import { useKnowledgeGraph, useModes, usePosts } from "@/hooks/use-api";
 import { useWorkflowStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { MetricCard } from "@/components/ui/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function DashboardPage() {
   const { data: posts, isLoading } = usePosts();
@@ -81,7 +82,21 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <CardDescription>No posts yet. Generate your first evidence-backed draft.</CardDescription>
+            <div className="px-4 pb-4">
+              <EmptyState
+                icon={FileText}
+                title="Generate your first LinkedIn post."
+                description="Evidence-backed drafts appear here after you run Generate."
+                action={
+                  <Button asChild>
+                    <Link href="/generate">
+                      <Sparkles className="h-4 w-4" />
+                      Start generating
+                    </Link>
+                  </Button>
+                }
+              />
+            </div>
           )}
         </Card>
 

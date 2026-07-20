@@ -13,6 +13,10 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { MetricCard } from "@/components/ui/metric-card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ExportActions } from "@/components/export/export-actions";
+import { VersionTimeline } from "@/components/generate/version-timeline";
+import { StreamingPost } from "@/components/generate/streaming-post";
+import { splitParagraphs } from "@/lib/generation-stream";
 
 const Monaco = dynamic(() => import("@monaco-editor/react"), { ssr: false, loading: () => <Skeleton className="h-[480px]" /> });
 
@@ -21,7 +25,7 @@ function OutputInner() {
   const id = params.get("id") || undefined;
   const { data: post, isLoading } = usePost(id);
   const { data: evidence } = useEvidence(id);
-  const { lastGenerate, draftVersions, pushVersion, restoreVersion } = useWorkflowStore();
+  const { lastGenerate, draftVersions, pushVersion, restoreVersion, versionTimeline, streamedParagraphs, carouselSvgs, carouselResult } = useWorkflowStore();
   const [text, setText] = useState("");
 
   useEffect(() => {
@@ -63,7 +67,13 @@ function OutputInner() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const previewParagraphs = streamedParagraphs.length
+    ? streamedParagraphs
+    : splitParagraphs(text);
+
   if (isLoading && id) return <Skeleton className="h-96" />;
+
+  const carouselExports = (carouselResult?.exports || {}) as Record<string, unknown>;
 
   return (
     <div className="space-y-4">
@@ -76,12 +86,31 @@ function OutputInner() {
         </div>
         <div className="flex gap-2">
           <Badge>{post?.status || lastGenerate?.status || "draft"}</Badge>
-          <Button variant="outline" onClick={() => navigator.clipboard.writeText(text)}>
-            Copy
-          </Button>
+          <ExportActions markdown={text} carouselExports={carouselExports} carouselSvgs={carouselSvgs} />
           <Button onClick={save}>Save</Button>
         </div>
       </div>
+
+      {versionTimeline.length ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Version timeline</CardTitle>
+            <CardDescription>Compare v1, optimization, editorial, and final side by side.</CardDescription>
+          </CardHeader>
+          <div className="px-4 pb-4">
+            <VersionTimeline versions={versionTimeline} onSelect={setText} />
+          </div>
+        </Card>
+      ) : null}
+
+      <Card className="xl:hidden">
+        <CardHeader>
+          <CardTitle>Reading preview</CardTitle>
+        </CardHeader>
+        <div className="px-4 pb-4">
+          <StreamingPost paragraphs={previewParagraphs} />
+        </div>
+      </Card>
 
       <div className="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]">
         <Card className="overflow-hidden p-0">

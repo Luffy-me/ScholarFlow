@@ -9,13 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VirtualList } from "@/components/ui/virtual-list";
+import { VersionTimeline } from "@/components/generate/version-timeline";
+import { EmptyState } from "@/components/ui/empty-state";
+import { History } from "lucide-react";
 
 export default function HistoryPage() {
   const { data: posts, isLoading } = usePosts();
-  const { draftVersions, restoreVersion } = useWorkflowStore();
+  const { draftVersions, restoreVersion, versionTimeline } = useWorkflowStore();
   const [q, setQ] = useState("");
-  const [left, setLeft] = useState<string>("");
-  const [right, setRight] = useState<string>("");
 
   const filtered = useMemo(() => {
     const list = posts || [];
@@ -39,11 +41,14 @@ export default function HistoryPage() {
           <CardTitle>Generated posts</CardTitle>
         </CardHeader>
         {isLoading ? (
-          <Skeleton className="h-32" />
-        ) : (
-          <div className="space-y-2">
-            {filtered.map((p) => (
-              <div key={p.id} className="rounded-xl border border-[var(--border)] px-3 py-3">
+          <Skeleton className="m-4 h-32" />
+        ) : filtered.length ? (
+          <VirtualList
+            items={filtered}
+            estimateSize={108}
+            className="max-h-[520px] overflow-auto sf-scrollbar px-2 pb-2"
+            renderItem={(p) => (
+              <div className="mb-2 rounded-xl border border-[var(--border)] px-3 py-3 transition-colors hover:bg-[var(--muted)]/50">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="font-medium">{p.topic}</div>
                   <div className="flex items-center gap-2">
@@ -58,53 +63,53 @@ export default function HistoryPage() {
                   {p.created_at ? new Date(p.created_at).toLocaleString() : "—"} · {p.content_mode} · {p.format}
                 </div>
               </div>
-            ))}
-            {!filtered.length ? <CardDescription>No posts found.</CardDescription> : null}
+            )}
+          />
+        ) : (
+          <div className="p-4">
+            <EmptyState
+              icon={History}
+              title="No posts found."
+              description="Generate your first LinkedIn post to build history."
+            />
           </div>
         )}
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Version history</CardTitle>
-          </CardHeader>
-          <div className="space-y-2">
-            {draftVersions.map((v) => (
-              <div key={v.id} className="flex items-center justify-between rounded-xl bg-[var(--muted)] px-3 py-2 text-sm">
-                <button className="text-left" onClick={() => setLeft(v.text)}>
-                  <div className="font-medium">{v.label}</div>
-                  <div className="text-xs text-[var(--muted-foreground)]">{new Date(v.at).toLocaleString()}</div>
-                </button>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => setRight(v.text)}>
-                    Compare
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      restoreVersion(v.id);
-                      setLeft(v.text);
-                    }}
-                  >
-                    Restore
-                  </Button>
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Pipeline version timeline</CardTitle>
+          <CardDescription>v1 → Optimization → Editorial → Final from the latest run.</CardDescription>
+        </CardHeader>
+        <div className="px-4 pb-4">
+          <VersionTimeline versions={versionTimeline} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Local version history</CardTitle>
+        </CardHeader>
+        <div className="space-y-2 px-4 pb-4">
+          {draftVersions.map((v) => (
+            <div key={v.id} className="flex items-center justify-between rounded-xl bg-[var(--muted)] px-3 py-2 text-sm">
+              <div>
+                <div className="font-medium">{v.label}</div>
+                <div className="text-xs text-[var(--muted-foreground)]">{new Date(v.at).toLocaleString()}</div>
               </div>
-            ))}
-            {!draftVersions.length ? <CardDescription>Local versions appear after generate/save.</CardDescription> : null}
-          </div>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Compare versions</CardTitle>
-          </CardHeader>
-          <div className="grid gap-3 md:grid-cols-2">
-            <pre className="max-h-80 overflow-auto rounded-xl bg-[var(--muted)] p-3 text-xs whitespace-pre-wrap">{left || "Select a version"}</pre>
-            <pre className="max-h-80 overflow-auto rounded-xl bg-[var(--muted)] p-3 text-xs whitespace-pre-wrap">{right || "Select compare target"}</pre>
-          </div>
-        </Card>
-      </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  restoreVersion(v.id);
+                }}
+              >
+                Restore
+              </Button>
+            </div>
+          ))}
+          {!draftVersions.length ? <CardDescription>Local versions appear after generate/save.</CardDescription> : null}
+        </div>
+      </Card>
     </div>
   );
 }

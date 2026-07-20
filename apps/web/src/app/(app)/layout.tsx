@@ -7,6 +7,7 @@ import { TopNav } from "@/components/layout/top-nav";
 import { InspectorPanel } from "@/components/layout/inspector";
 import { StatusBar } from "@/components/layout/status-bar";
 import { CommandPalette } from "@/components/command/command-palette";
+import { KeyboardShortcutsProvider } from "@/hooks/use-keyboard-shortcuts";
 
 export default function AppShellLayout({ children }: { children: React.ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -30,6 +31,7 @@ export default function AppShellLayout({ children }: { children: React.ReactNode
         </div>
         <StatusBar />
       </div>
+      <KeyboardShortcutsProvider commandOpen={commandOpen} setCommandOpen={setCommandOpen} />
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
