@@ -1,0 +1,66 @@
+{
+  "Apple": {
+    "bg": "#F5F5F7",
+    "fg": "#1D1D1F",
+    "accent": "#0071E3",
+    "muted": "#86868B",
+    "radius": 18,
+    "density": "airy"
+  },
+  "Stripe": {
+    "bg": "#FFFFFF",
+    "fg": "#0A2540",
+    "accent": "#635BFF",
+    "muted": "#425466",
+    "radius": 12,
+    "density": "balanced"
+  },
+  "Linear": {
+    "bg": "#0F0F10",
+    "fg": "#EDEDEF",
+    "accent": "#5E6AD2",
+    "muted": "#8A8F98",
+    "radius": 10,
+    "density": "compact"
+  },
+  "Anthropic": {
+    "bg": "#F7F4EF",
+    "fg": "#141413",
+    "accent": "#D97757",
+    "muted": "#6B645C",
+    "radius": 8,
+    "density": "balanced"
+  },
+  "OpenAI": {
+    "bg": "#FFFFFF",
+    "fg": "#0D0D0D",
+    "accent": "#10A37F",
+    "muted": "#6E6E80",
+    "radius": 14,
+    "density": "balanced"
+  },
+  "Notion": {
+    "bg": "#FFFFFF",
+    "fg": "#37352F",
+    "accent": "#2EAADC",
+    "muted": "#787774",
+    "radius": 6,
+    "density": "airy"
+  },
+  "Minimal": {
+    "bg": "#FFFFFF",
+    "fg": "#111111",
+    "accent": "#111111",
+    "muted": "#666666",
+    "radius": 0,
+    "density": "airy"
+  },
+  "Dark": {
+    "bg": "#0B0F19",
+    "fg": "#F8FAFC",
+    "accent": "#60A5FA",
+    "muted": "#9CA3AF",
+    "radius": 12,
+    "density": "balanced"
+  }
+}

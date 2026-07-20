@@ -1,0 +1,24 @@
+{
+  "posts": [
+    {
+      "id": "ai_generic_opening",
+      "text": "In today's rapidly evolving world, AI is revolutionizing industries. It is important to note that companies are rapidly adopting transformative solutions.",
+      "traits": ["generic_opening", "editorial_commentary", "vague_claims", "buzzword_overuse"]
+    },
+    {
+      "id": "ai_vague_certainty",
+      "text": "Studies show AI will replace all developers. Many experts believe this represents a transformative milestone for the industry.",
+      "traits": ["vague_claims", "unnatural_certainty", "inflated_language", "fake_sources"]
+    },
+    {
+      "id": "ai_formulaic_list",
+      "text": "AI is not about tools. It is about transformation.\n\nHere are 5 tips:\n1. Embrace change\n2. Leverage synergies\n3. Think big\n4. Move fast\n5. Stay ahead\n\n**Revolutionary.** **Groundbreaking.** **Game-changing.**",
+      "traits": ["formulaic_structure", "excessive_formatting", "buzzword_overuse"]
+    },
+    {
+      "id": "ai_no_voice",
+      "text": "Digital transformation continues to reshape organizations. Seamless integration of cutting-edge solutions unlocks unprecedented value across the enterprise.",
+      "traits": ["lack_of_personal_voice", "inflated_language", "buzzword_overuse"]
+    }
+  ]
+}

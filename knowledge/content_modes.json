@@ -1,0 +1,33 @@
+{
+  "modes": {
+    "founder": {
+      "label": "Founder style",
+      "tone": "direct operator",
+      "emphasis": ["decisions", "tradeoffs", "lessons from building"],
+      "avoid": ["corporate fluff", "fake scale claims"],
+      "opening_guidance": "Start with a concrete decision, surprise, or lesson from building."
+    },
+    "researcher": {
+      "label": "Researcher style",
+      "tone": "careful and evidence-led",
+      "emphasis": ["claims with sources", "uncertainty where needed"],
+      "avoid": ["overconfident generalizations"],
+      "opening_guidance": "Lead with a finding, tension in the evidence, or a precise question."
+    },
+    "engineer": {
+      "label": "Engineer style",
+      "tone": "precise and practical",
+      "emphasis": ["systems", "implementation lessons", "concrete examples"],
+      "avoid": ["buzzwords without substance"],
+      "opening_guidance": "Open with a system behavior, failure mode, or implementation lesson."
+    },
+    "career_journey": {
+      "label": "Career journey style",
+      "tone": "reflective and specific",
+      "emphasis": ["transitions", "skills growth", "real milestones"],
+      "avoid": ["motivational filler", "invented biography"],
+      "opening_guidance": "Begin with a real transition, skill shift, or milestone you can verify in memory."
+    }
+  },
+  "default_mode": "founder"
+}

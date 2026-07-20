@@ -1,0 +1,32 @@
+{
+  "id": "checklist",
+  "slots": [
+    "heading",
+    "items",
+    "footer"
+  ],
+  "regions": {
+    "heading": {
+      "x": 64,
+      "y": 80,
+      "w": 952,
+      "h": 120
+    },
+    "items": {
+      "x": 64,
+      "y": 240,
+      "w": 952,
+      "h": 960
+    },
+    "footer": {
+      "x": 64,
+      "y": 1260,
+      "w": 952,
+      "h": 40
+    }
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  }
+}

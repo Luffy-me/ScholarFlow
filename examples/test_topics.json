@@ -1,0 +1,70 @@
+{
+  "dataset_name": "phase1_5_real_ai_validation",
+  "description": "Sample topics for real Ollama generation evaluation across core domains.",
+  "topics": [
+    {
+      "id": "ai_local_eval",
+      "category": "AI",
+      "topic": "Why local AI evaluation loops matter more than model size",
+      "content_mode": "engineer",
+      "audience": "ML engineers and technical founders",
+      "format": "short"
+    },
+    {
+      "id": "ai_hallucination",
+      "category": "AI",
+      "topic": "How I catch hallucinated personal claims before publishing AI drafts",
+      "content_mode": "founder",
+      "audience": "builders using AI writing tools",
+      "format": "short"
+    },
+    {
+      "id": "startup_mvp_focus",
+      "category": "startups",
+      "topic": "The expensive mistake of building features nobody asked for",
+      "content_mode": "founder",
+      "audience": "early-stage founders",
+      "format": "short"
+    },
+    {
+      "id": "startup_distribution",
+      "category": "startups",
+      "topic": "Distribution lessons from shipping a local-first open-source tool",
+      "content_mode": "founder",
+      "audience": "startup operators",
+      "format": "long_form"
+    },
+    {
+      "id": "economics_incentives",
+      "category": "economics",
+      "topic": "Incentive design beats slogans in product and market decisions",
+      "content_mode": "researcher",
+      "audience": "product leaders and economists",
+      "format": "short"
+    },
+    {
+      "id": "economics_local_compute",
+      "category": "economics",
+      "topic": "The cost tradeoff between local inference and cloud APIs for content workflows",
+      "content_mode": "researcher",
+      "audience": "technical operators watching burn rate",
+      "format": "short"
+    },
+    {
+      "id": "swe_quality_gates",
+      "category": "software engineering",
+      "topic": "Treat writing quality like CI: fail tests for generic AI phrasing",
+      "content_mode": "engineer",
+      "audience": "software engineers",
+      "format": "short"
+    },
+    {
+      "id": "swe_rag_tradeoffs",
+      "category": "software engineering",
+      "topic": "RAG systems fail when you add context instead of better questions",
+      "content_mode": "engineer",
+      "audience": "backend and AI engineers",
+      "format": "short"
+    }
+  ]
+}

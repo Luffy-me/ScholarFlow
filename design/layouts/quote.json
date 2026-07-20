@@ -1,0 +1,32 @@
+{
+  "id": "quote",
+  "slots": [
+    "quote",
+    "attribution",
+    "footer"
+  ],
+  "regions": {
+    "quote": {
+      "x": 96,
+      "y": 360,
+      "w": 888,
+      "h": 360
+    },
+    "attribution": {
+      "x": 96,
+      "y": 780,
+      "w": 888,
+      "h": 80
+    },
+    "footer": {
+      "x": 64,
+      "y": 1260,
+      "w": 952,
+      "h": 40
+    }
+  },
+  "canvas": {
+    "width": 1080,
+    "height": 1350
+  }
+}

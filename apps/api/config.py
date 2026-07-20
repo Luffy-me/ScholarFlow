@@ -1,0 +1,150 @@
+"""Application settings."""
+
+from __future__ import annotations
+
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Keep local to avoid import cycles with models.router → apps.api.config.
+DEEPSEEK_DEFAULT_MODEL = "deepseek-r1:7b"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    database_url: str = "sqlite+pysqlite:///./linkedin_content.db"
+    ollama_base_url: str = Field(
+        default="http://localhost:11434",
+        validation_alias=AliasChoices("OLLAMA_BASE_URL", "ollama_base_url"),
+    )
+    # Prefer OLLAMA_MODEL; DEFAULT_MODEL kept for backward compatibility.
+    ollama_model: str = Field(
+        default="qwen3:8b",
+        validation_alias=AliasChoices("OLLAMA_MODEL", "DEFAULT_MODEL", "ollama_model", "default_model"),
+    )
+
+    # Qwen — human writing
+    writer_model: str = Field(
+        default="qwen3:8b",
+        validation_alias=AliasChoices("WRITER_MODEL", "writer_model"),
+    )
+    humanizer_model: str = Field(
+        default="qwen3:8b",
+        validation_alias=AliasChoices("HUMANIZER_MODEL", "humanizer_model"),
+    )
+
+    # DeepSeek — reasoning / analysis / criticism
+    # Accepts "deepseek" alias (resolved to DEEPSEEK_DEFAULT_MODEL) or a concrete tag.
+    research_model: str = Field(
+        default="deepseek",
+        validation_alias=AliasChoices("RESEARCH_MODEL", "RESEARCHER_MODEL", "research_model", "researcher_model"),
+    )
+    insight_model: str = Field(
+        default="deepseek",
+        validation_alias=AliasChoices("INSIGHT_MODEL", "insight_model"),
+    )
+    critic_model: str = Field(
+        default="deepseek",
+        validation_alias=AliasChoices("CRITIC_MODEL", "critic_model"),
+    )
+    predictor_model: str = Field(
+        default="deepseek",
+        validation_alias=AliasChoices("PREDICTOR_MODEL", "predictor_model"),
+    )
+    deepseek_model: str = Field(
+        default=DEEPSEEK_DEFAULT_MODEL,
+        validation_alias=AliasChoices("DEEPSEEK_MODEL", "deepseek_model"),
+    )
+
+    # Optional stage overrides
+    angle_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("ANGLE_MODEL", "angle_model"),
+    )
+    strategist_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("STRATEGIST_MODEL", "strategist_model"),
+    )
+    writing_quality_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("WRITING_QUALITY_MODEL", "writing_quality_model"),
+    )
+    trend_model: str = Field(
+        default="",
+        validation_alias=AliasChoices("TREND_MODEL", "trend_model"),
+    )
+
+    ollama_think: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("OLLAMA_THINK", "ollama_think"),
+    )
+    ollama_num_ctx: int = Field(
+        default=4096,
+        validation_alias=AliasChoices("OLLAMA_NUM_CTX", "ollama_num_ctx"),
+    )
+    debate_mode: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("DEBATE_MODE", "debate_mode"),
+    )
+    user_memory_path: str = "knowledge/user_memory.json"
+    content_modes_path: str = "knowledge/content_modes.json"
+    engagement_feedback_path: str = "feedback/engagement_feedback.json"
+    research_sources_dir: str = "research_sources"
+    use_fake_provider: bool = False
+
+    @property
+    def default_model(self) -> str:
+        """Alias used across the API and providers."""
+        return self.ollama_model
+
+    def resolved_deepseek_model(self) -> str:
+        """Concrete DeepSeek model tag (never the bare alias 'deepseek')."""
+        candidate = (self.deepseek_model or DEEPSEEK_DEFAULT_MODEL).strip()
+        if candidate.lower() in {"deepseek", "deepseek-r1"}:
+            return DEEPSEEK_DEFAULT_MODEL
+        return candidate
+
+    def _expand(self, value: str, *, writing: bool = False) -> str:
+        raw = (value or "").strip()
+        if not raw:
+            return self.writer_model if writing else self.resolved_deepseek_model()
+        if raw.lower() in {"deepseek", "deepseek-r1"}:
+            return self.resolved_deepseek_model()
+        if raw.lower() in {"qwen", "qwen3"}:
+            return self.writer_model or self.ollama_model
+        return raw
+
+    def model_for_stage(self, stage: str) -> str:
+        """Resolve per-stage model with DeepSeek/Qwen family defaults."""
+        key = (stage or "").strip().lower()
+        deepseek = self.resolved_deepseek_model()
+        qwen = self._expand(self.writer_model, writing=True)
+
+        mapping = {
+            # Qwen writing
+            "writer": self._expand(self.writer_model, writing=True),
+            "humanizer": self._expand(self.humanizer_model or self.writer_model, writing=True),
+            "debate_rewrite": self._expand(self.writer_model, writing=True),
+            # DeepSeek reasoning
+            "researcher": self._expand(self.research_model),
+            "research_agent": self._expand(self.research_model),
+            "research": self._expand(self.research_model),
+            "trend_analyzer": self._expand(self.trend_model or self.research_model),
+            "trend_analysis": self._expand(self.trend_model or self.research_model),
+            "insight_engine": self._expand(self.insight_model),
+            "insight": self._expand(self.insight_model),
+            "claim_checker": deepseek,
+            "grounding": deepseek,
+            "critic": self._expand(self.critic_model),
+            "debate_critic": self._expand(self.critic_model),
+            "debate_final": self._expand(self.critic_model),
+            "engagement_predictor": self._expand(self.predictor_model),
+            "predictor": self._expand(self.predictor_model),
+            "writing_quality": self._expand(self.writing_quality_model or self.critic_model),
+            "angle_finder": self._expand(self.angle_model or self.insight_model),
+            "strategist": self._expand(self.strategist_model or self.insight_model),
+        }
+        return mapping.get(key, deepseek if key else qwen)
+
+
+settings = Settings()

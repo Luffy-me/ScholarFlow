@@ -1,0 +1,19 @@
+{
+  "posts": [
+    {
+      "id": "good_local_models",
+      "text": "I spent the last few weeks testing local AI models, and one thing surprised me.\n\nThe bottleneck wasn't model quality. It was my evaluation loop.\n\nOnce I wrote failing tests for generic phrasing, the drafts got sharper fast.\n\nWhat part of your workflow is quietly limiting quality?",
+      "traits": ["strong_hook", "first_person", "specific_example", "clear_opinion", "discussion_question"]
+    },
+    {
+      "id": "good_rag_tradeoff",
+      "text": "I built a RAG chatbot last quarter and kept making the same mistake.\n\nI added more context instead of better questions.\n\nRetrieval got noisier. Answers got vaguer.\n\nThe fix was boring: tighter chunking and an explicit 'I don't know' path.",
+      "traits": ["personal_story", "specific_example", "useful_insight", "clear_opinion"]
+    },
+    {
+      "id": "good_shipping_lesson",
+      "text": "I almost shipped a feature nobody asked for.\n\nIt looked impressive in demos. It created support debt in week one.\n\nNow I ask one question before building: what broken workflow does this replace?",
+      "traits": ["strong_hook", "personal_story", "clear_opinion", "useful_insight"]
+    }
+  ]
+}
