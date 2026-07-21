@@ -2,24 +2,44 @@
 
 Local-first AI for research-backed LinkedIn content. **FastAPI** backend + **Next.js** web UI.
 
-## One-click start (macOS)
+## Start ScholarFlow with one click
 
-Double-click:
+**macOS:** double-click:
 
-`scripts/start_scholarflow.command`
+```text
+scripts/start_scholarflow.command
+```
 
-This will:
+Or from a terminal:
 
-1. Start Ollama if it is not already running  
-2. Create/activate `.venv` and start FastAPI on `API_PORT` (default **8000**)  
-3. Run `npm run dev` in `apps/web` on `FRONTEND_PORT` (default **3000**)  
-4. Open `http://localhost:3000`
+```bash
+./scripts/start_scholarflow.command
+```
 
-Stop API + UI (Ollama keeps running):
+This script will:
 
-`scripts/stop_scholarflow.command`
+1. Detect the project root automatically  
+2. Check that Ollama is installed  
+3. Start Ollama if it is not already running  
+4. Verify required models (`qwen3:8b`, `deepseek-r1:8b`) and **pull** any that are missing  
+5. Start FastAPI on port **8000** (skips if already listening)  
+6. Start Next.js on port **3000** (skips if already listening)  
+7. Open `http://localhost:3000`  
+8. Write logs under `.scholarflow/logs/`
 
-Logs: `.scholarflow/logs/`
+**Stop** (FastAPI + Next.js only — Ollama stays up):
+
+```bash
+./scripts/stop_scholarflow.command
+```
+
+**Restart** (stop then start):
+
+```bash
+./scripts/restart_scholarflow.command
+```
+
+Logs and PID files: `.scholarflow/`
 
 ## Manual start (fresh clone)
 

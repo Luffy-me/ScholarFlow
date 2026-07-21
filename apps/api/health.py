@@ -15,7 +15,11 @@ async def build_health_payload() -> dict[str, Any]:
     writer = settings.model_for_stage("writer")
     critic = settings.model_for_stage("critic")
     predictor = settings.model_for_stage("predictor")
-    required = [writer, critic, predictor]
+    # Preserve order, drop duplicates (critic/predictor often share a tag).
+    required: list[str] = []
+    for m in (writer, critic, predictor):
+        if m not in required:
+            required.append(m)
 
     database_ok = True
     try:
