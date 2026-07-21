@@ -663,7 +663,7 @@ The **Engagement Predictor** may also use them as calibration hints for hook/spe
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/health` | API health |
-| `GET` | `/ai/status` | Ollama reachability + available models |
+| `GET` | `/api/v1/ai/status` | Ollama reachability, installed models, active writer/critic/predictor (always 200 JSON) |
 | `GET` | `/modes` | List content modes from `content_modes.json` |
 | `POST` | `/generate` | Writer → humanizer → critic → engagement predictor |
 | `POST` | `/humanize` | Re-run humanizer |

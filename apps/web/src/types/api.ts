@@ -7,11 +7,19 @@ export type AiModels = {
 };
 
 export type AiStatus = {
+  connected: boolean;
   online: boolean;
   provider: string;
+  writer: string;
+  humanizer?: string;
+  critic: string;
+  predictor: string;
   models: string[];
+  installed_models: string[];
   detail: string;
   default_model: string;
+  missing_models?: string[];
+  errors?: Array<{ error: string; message: string; resolution?: string }>;
 };
 
 export type ContentModes = {

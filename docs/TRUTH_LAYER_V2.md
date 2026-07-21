@@ -15,8 +15,8 @@ Hard safety gate:
 | Stage | Env var | Default |
 |---|---|---|
 | Writer | `WRITER_MODEL` | `qwen3:8b` |
-| Critic | `CRITIC_MODEL` | `qwen3:4b` |
-| Predictor | `PREDICTOR_MODEL` | `qwen3:4b` |
+| Critic | `CRITIC_MODEL` | `deepseek-r1:8b` |
+| Predictor | `PREDICTOR_MODEL` | `deepseek-r1:8b` |
 
 ## Before / after (same failure modes)
 

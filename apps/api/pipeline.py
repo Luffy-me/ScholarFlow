@@ -26,6 +26,7 @@ from agents.trend_analyzer import TrendAnalyzerAgent, TrendAnalyzerInput
 from agents.writer import WriterAgent, WriterInput
 from agents.writing_quality import WritingQualityAnalyzer, WritingQualityInput
 from apps.api.config import settings
+from apps.api.pipeline_log import run_stage
 from knowledge_graph import KnowledgeGraph
 from models.base import ModelProvider
 from models.orchestrator import ModelOrchestrator
@@ -72,13 +73,16 @@ async def run_generation_pipeline(
     opportunity_engine = ContentOpportunityEngine()
     graph = KnowledgeGraph()
 
-    research_out = await research_intel.run(
+    research_out = await run_stage(
+        "Research",
+        research_intel.run(
         ResearchOrchestratorInput(
             topic=topic,
             content_mode=content_mode,
             user_memory=memory,
             extra={"audience": audience} if audience else {},
         )
+    ),
     )
     research_data = research_out.data
     # Compatibility fields expected by later stages.
@@ -104,7 +108,9 @@ async def run_generation_pipeline(
         audience=audience or "builders",
     )
 
-    trends = await trend_analyzer.run(
+    trends = await run_stage(
+        "Reasoning",
+        trend_analyzer.run(
         TrendAnalyzerInput(
             topic=topic,
             content_mode=content_mode,
@@ -114,6 +120,7 @@ async def run_generation_pipeline(
                 "research": research_data,
             },
         )
+    ),
     )
     # Merge research-intel trend signals when available.
     if research_out.brief and research_out.brief.trends:
@@ -122,7 +129,9 @@ async def run_generation_pipeline(
             "intel_trends": [t.model_dump() for t in research_out.brief.trends],
         }
 
-    insight_out = await insight_engine.run(
+    insight_out = await run_stage(
+        "Insight",
+        insight_engine.run(
         InsightEngineInput(
             topic=topic,
             content_mode=content_mode,
@@ -134,22 +143,26 @@ async def run_generation_pipeline(
                 "verified_experiences": approved_experience_texts(memory),
             },
         )
+    ),
     )
     insight = insight_out.insight.as_dict()
 
-    angles_out = await angle_finder.run(
-        AngleFinderInput(
-            topic=topic,
-            content_mode=content_mode,
-            user_memory=memory,
-            extra={
-                "audience": audience,
-                "insight": insight,
-                "trends": trends.data,
-                "research": research_data,
-                "opportunity": opportunity.model_dump(),
-            },
-        )
+    angles_out = await run_stage(
+        "Angles",
+        angle_finder.run(
+            AngleFinderInput(
+                topic=topic,
+                content_mode=content_mode,
+                user_memory=memory,
+                extra={
+                    "audience": audience,
+                    "insight": insight,
+                    "trends": trends.data,
+                    "research": research_data,
+                    "opportunity": opportunity.model_dump(),
+                },
+            )
+        ),
     )
     angles = [a.model_dump() for a in angles_out.angles]
     if not angles:
@@ -157,19 +170,22 @@ async def run_generation_pipeline(
     idx = max(0, min(selected_angle_index, len(angles) - 1))
     selected_angle = angles[idx]
 
-    strategy = await strategist.run(
-        StrategistInput(
-            topic=topic,
-            content_mode=content_mode,
-            user_memory=memory,
-            extra={
-                "audience": audience,
-                "angle": selected_angle,
-                "research": research_data,
-                "insight": insight,
-                "trends": trends.data,
-            },
-        )
+    strategy = await run_stage(
+        "Strategist",
+        strategist.run(
+            StrategistInput(
+                topic=topic,
+                content_mode=content_mode,
+                user_memory=memory,
+                extra={
+                    "audience": audience,
+                    "angle": selected_angle,
+                    "research": research_data,
+                    "insight": insight,
+                    "trends": trends.data,
+                },
+            )
+        ),
     )
 
     writer_extra = {
@@ -181,14 +197,17 @@ async def run_generation_pipeline(
             c for c in research_data.get("evidence", []) if c.get("verified") or c.get("supporting_sources")
         ],
     }
-    written = await writer.run(
-        WriterInput(
-            topic=topic,
-            content_mode=content_mode,
-            format=format,
-            user_memory=memory,
-            extra=writer_extra,
-        )
+    written = await run_stage(
+        "Writer",
+        writer.run(
+            WriterInput(
+                topic=topic,
+                content_mode=content_mode,
+                format=format,
+                user_memory=memory,
+                extra=writer_extra,
+            )
+        ),
     )
 
     debate_payload: dict[str, Any] | None = None
@@ -199,19 +218,23 @@ async def run_generation_pipeline(
             critic_provider=stage_provider("debate_critic"),
             rewrite_provider=stage_provider("debate_rewrite"),
         )
-        debate_result = await debate.run(
-            topic=topic,
-            content_mode=content_mode,
-            format=format,
-            user_memory=memory,
-            writer_extra=writer_extra,
-            initial_draft=written.text,
+        debate_result = await run_stage(
+            "Debate",
+            debate.run(
+                topic=topic,
+                content_mode=content_mode,
+                format=format,
+                user_memory=memory,
+                writer_extra=writer_extra,
+                initial_draft=written.text,
+            ),
         )
         debate_payload = debate_result.model_dump()
         post_write_text = debate_result.draft_v2 or written.text
 
-    grounded = await claim_checker.run(
-        GroundingInput(text=post_write_text, user_memory=memory, topic=topic)
+    grounded = await run_stage(
+        "Claim Check",
+        claim_checker.run(GroundingInput(text=post_write_text, user_memory=memory, topic=topic)),
     )
 
     quality = await quality_analyzer.run(
@@ -224,13 +247,16 @@ async def run_generation_pipeline(
         )
     )
 
-    humanized = await humanizer.run(
-        HumanizerInput(
-            text=grounded.text or post_write_text,
-            user_memory=memory,
-            topic=topic,
-            extra={"improvements": quality.improvements, "writing_quality": quality.as_report()},
-        )
+    humanized = await run_stage(
+        "Humanizer",
+        humanizer.run(
+            HumanizerInput(
+                text=grounded.text or post_write_text,
+                user_memory=memory,
+                topic=topic,
+                extra={"improvements": quality.improvements, "writing_quality": quality.as_report()},
+            )
+        ),
     )
 
     final_grounding = await claim_checker.run(
@@ -260,16 +286,20 @@ async def run_generation_pipeline(
         )
     )
 
-    critiqued = await critic.run(
-        CriticInput(
-            text=final_text,
-            user_memory=memory,
-            content_mode=content_mode,
-            extra={"writing_quality": final_quality.as_report()},
-        )
+    critiqued = await run_stage(
+        "Editorial Review",
+        critic.run(
+            CriticInput(
+                text=final_text,
+                user_memory=memory,
+                content_mode=content_mode,
+                extra={"writing_quality": final_quality.as_report()},
+            )
+        ),
     )
-    predicted = await predictor.run(
-        EngagementPredictorInput(text=final_text, user_memory=memory)
+    predicted = await run_stage(
+        "Engagement Predictor",
+        predictor.run(EngagementPredictorInput(text=final_text, user_memory=memory)),
     )
 
     scorer = QualityScorer()
