@@ -76,6 +76,26 @@ class Settings(BaseSettings):
         default=ai_config.OLLAMA_NUM_CTX,
         validation_alias=AliasChoices("OLLAMA_NUM_CTX", "ollama_num_ctx"),
     )
+    ollama_connect_timeout: float = Field(
+        default=ai_config.OLLAMA_CONNECT_TIMEOUT,
+        validation_alias=AliasChoices("OLLAMA_CONNECT_TIMEOUT", "ollama_connect_timeout"),
+    )
+    ollama_generation_timeout: float = Field(
+        default=ai_config.OLLAMA_GENERATION_TIMEOUT,
+        validation_alias=AliasChoices("OLLAMA_GENERATION_TIMEOUT", "ollama_generation_timeout"),
+    )
+    ollama_max_retries: int = Field(
+        default=ai_config.OLLAMA_MAX_RETRIES,
+        validation_alias=AliasChoices("OLLAMA_MAX_RETRIES", "ollama_max_retries"),
+    )
+    api_port: int = Field(
+        default=ai_config.API_PORT,
+        validation_alias=AliasChoices("API_PORT", "api_port"),
+    )
+    frontend_port: int = Field(
+        default=ai_config.FRONTEND_PORT,
+        validation_alias=AliasChoices("FRONTEND_PORT", "frontend_port"),
+    )
     debate_mode: bool = Field(
         default=True,
         validation_alias=AliasChoices("DEBATE_MODE", "debate_mode"),

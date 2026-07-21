@@ -161,12 +161,18 @@ def build_family_provider(family: Family, *, fake: bool = False) -> ModelProvide
             default_model=settings.resolved_deepseek_model(),
             think=True,
             num_ctx=settings.ollama_num_ctx,
+            connect_timeout_seconds=settings.ollama_connect_timeout,
+            max_retries=settings.ollama_max_retries,
+            timeout_seconds=settings.ollama_generation_timeout,
         )
     return OllamaProvider(
         base_url=settings.ollama_base_url,
         default_model=settings.writer_model or settings.ollama_model,
         think=settings.ollama_think,
         num_ctx=settings.ollama_num_ctx,
+        connect_timeout_seconds=settings.ollama_connect_timeout,
+        max_retries=settings.ollama_max_retries,
+        timeout_seconds=settings.ollama_generation_timeout,
     )
 
 

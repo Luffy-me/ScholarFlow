@@ -23,15 +23,18 @@ class DeepSeekProvider(ModelProvider):
         default_model: str = DEEPSEEK_DEFAULT_MODEL,
         *,
         timeout_seconds: float = 300.0,
+        connect_timeout_seconds: float = 5.0,
+        max_retries: int = 2,
         think: bool = True,
         num_ctx: int = 4096,
     ) -> None:
-        # DeepSeek-R1 benefits from think=True for reasoning traces when available.
         self.default_model = default_model or DEEPSEEK_DEFAULT_MODEL
         self._ollama = OllamaProvider(
             base_url=base_url,
             default_model=self.default_model,
             timeout_seconds=timeout_seconds,
+            connect_timeout_seconds=connect_timeout_seconds,
+            max_retries=max_retries,
             think=think,
             num_ctx=num_ctx,
         )

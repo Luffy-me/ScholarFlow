@@ -2,7 +2,26 @@
 
 Local-first AI for research-backed LinkedIn content. **FastAPI** backend + **Next.js** web UI.
 
-## Start the full stack (fresh clone)
+## One-click start (macOS)
+
+Double-click:
+
+`scripts/start_scholarflow.command`
+
+This will:
+
+1. Start Ollama if it is not already running  
+2. Create/activate `.venv` and start FastAPI on `API_PORT` (default **8000**)  
+3. Run `npm run dev` in `apps/web` on `FRONTEND_PORT` (default **3000**)  
+4. Open `http://localhost:3000`
+
+Stop API + UI (Ollama keeps running):
+
+`scripts/stop_scholarflow.command`
+
+Logs: `.scholarflow/logs/`
+
+## Manual start (fresh clone)
 
 **Terminal 1 — Ollama**
 
@@ -34,8 +53,20 @@ npm run dev
 
 Open `http://localhost:3000`. The UI calls FastAPI via `/backend/*` (proxied to `http://127.0.0.1:8000`).
 
-Health: `GET http://127.0.0.1:8000/health` → `{"status":"ok"}`  
+Health: `GET http://127.0.0.1:8000/health` → `status`, `backend`, `ollama`, `models`  
 AI status: `GET http://127.0.0.1:8000/api/v1/ai/status` (always JSON, never 500)
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| **Ollama not detected** | Run `ollama serve`; pull `qwen3:8b` and `deepseek-r1:8b` |
+| **Port already in use** | Run `scripts/stop_scholarflow.command` or free ports `8000` / `3000` |
+| **Model missing** | `ollama pull <model>` — check Settings or `/api/v1/ai/status` `missing_models` |
+| **Database error** | Delete `linkedin_content.db` or fix `DATABASE_URL` in `.env` |
+| **UI shows API offline** | Start uvicorn; confirm `SCHOLARFLOW_API_URL=http://127.0.0.1:8000` |
+
+See [DEVOPS_AUDIT.md](docs/DEVOPS_AUDIT.md) for the full audit.
 
 ## Model standard
 

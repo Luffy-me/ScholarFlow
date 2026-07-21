@@ -7,6 +7,7 @@ from typing import Any
 
 import httpx
 
+from models.ollama.http_client import ollama_client, ollama_timeout
 from models.ollama.provider import OllamaProvider
 
 
@@ -26,7 +27,8 @@ def model_installed(installed: list[str], requested: str) -> bool:
 async def probe_ollama(base_url: str, *, timeout: float = 5.0) -> OllamaProbeResult:
     url = base_url.rstrip("/")
     try:
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        timeout = ollama_timeout(connect=timeout, read=timeout + 5)
+        async with ollama_client(timeout=timeout) as client:
             response = await client.get(f"{url}/api/tags")
             response.raise_for_status()
             payload: dict[str, Any] = response.json()
@@ -41,7 +43,7 @@ async def probe_ollama(base_url: str, *, timeout: float = 5.0) -> OllamaProbeRes
             reachable=False,
             installed_models=[],
             error="OllamaTimeout",
-            message=f"Timed out connecting to Ollama at {url}.",
+            message=f"Ollama unavailable: connection timeout after {timeout:.0f} seconds at {url}.",
             resolution="Ensure Ollama is running: ollama serve",
         )
     except httpx.ConnectError:

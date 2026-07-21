@@ -11,10 +11,13 @@ from typing import Any
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
 
-from apps.api.ai_status import build_ai_status_payload
+from contextlib import asynccontextmanager
+
+from apps.api.health import build_health_payload
+from apps.api.startup import run_startup_validation
 from apps.api.config import settings
 from apps.api.errors import register_exception_handlers
-from apps.api.ollama_probe import missing_models, probe_ollama, resolution_for_missing
+from apps.api.ai_status import build_ai_status_payload
 from apps.api.pipeline import run_generation_pipeline
 from apps.api.schemas.api import (
     EngagementFeedbackCreate,
@@ -37,14 +40,24 @@ from database.models import (
 )
 from database.session import get_session, init_db
 from models.ollama import OllamaUnavailableError
+from apps.api.pipeline_errors import PipelineStageError
 from shared.knowledge import load_content_modes, load_user_memory, repo_path
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await run_startup_validation()
+    yield
+    logger.info("ScholarFlow API shutdown complete")
+
 
 app = FastAPI(
     title="LinkedIn Content Intelligence Engine",
     version="0.1.0",
     description="Phase 1 AI core API — local-first content intelligence (no UI).",
+    lifespan=lifespan,
 )
 
 register_exception_handlers(app)
@@ -95,44 +108,9 @@ def _ensure_local_user(session: Session) -> User:
     return user
 
 
-@app.on_event("startup")
-async def on_startup() -> None:
-    init_db(settings.database_url)
-    if settings.use_fake_provider:
-        logger.info("ScholarFlow API started (USE_FAKE_PROVIDER=true — Ollama checks skipped)")
-        return
-
-    writer = settings.model_for_stage("writer")
-    critic = settings.model_for_stage("critic")
-    predictor = settings.model_for_stage("predictor")
-    probe = await probe_ollama(settings.ollama_base_url)
-    if not probe.reachable:
-        logger.warning(
-            "Ollama not reachable at %s — %s. %s",
-            settings.ollama_base_url,
-            probe.message,
-            probe.resolution,
-        )
-    else:
-        logger.info("Ollama reachable at %s (%d models)", settings.ollama_base_url, len(probe.installed_models))
-
-    for label, model in (
-        ("Writer", writer),
-        ("Critic", critic),
-        ("Predictor", predictor),
-    ):
-        if not probe.reachable:
-            logger.warning("  ? %s: %s (Ollama offline — could not verify)", label, model)
-            continue
-        if missing_models(probe.installed_models, [model]):
-            logger.warning("  ✗ %s: %s missing — %s", label, model, resolution_for_missing(model))
-        else:
-            logger.info("  ✓ %s: %s", label, model)
-
-
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+async def health() -> dict[str, Any]:
+    return await build_health_payload()
 
 
 @app.get("/api/v1/ai/status")
@@ -291,7 +269,7 @@ async def generate(payload: GenerateRequest, session: Session = Depends(get_sess
             fake=settings.use_fake_provider,
             selected_angle_index=payload.selected_angle_index,
         )
-    except OllamaUnavailableError:
+    except (PipelineStageError, OllamaUnavailableError):
         raise
     except Exception as exc:
         logger.exception("Generation pipeline failed")

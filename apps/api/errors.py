@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from apps.api.pipeline_errors import PipelineStageError
 from models.ollama import OllamaUnavailableError
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,16 @@ def _structured(
 
 
 def register_exception_handlers(app) -> None:
+    @app.exception_handler(PipelineStageError)
+    async def _pipeline_stage(_request: Request, exc: PipelineStageError) -> JSONResponse:
+        return _structured(
+            error="PipelineStageFailed",
+            message=exc.message,
+            status_code=503,
+            extra={"stage": exc.stage},
+            resolution="Check API logs for [stage] entries; fix Ollama/models and retry.",
+        )
+
     @app.exception_handler(OllamaUnavailableError)
     async def _ollama_unavailable(_request: Request, exc: OllamaUnavailableError) -> JSONResponse:
         text = str(exc)
